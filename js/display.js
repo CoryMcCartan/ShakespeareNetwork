@@ -76,8 +76,8 @@ var Displayer = (function() {
 
         // edge setup
         edge = edges.selectAll("line.edge")
-            .data(graphData.edges, 
-            (n) => n.source.name + " -> " + n.target.name); // how to ID edges
+            .data(graphData.edges, (n) => 
+                n.source.name + " -> " + (n.target|| {name: " "}).name); // how to ID edges
         edge.enter().append("line")
             .attr("class", "edge")
             .attr("stroke", edgeColor)
@@ -116,10 +116,23 @@ var Displayer = (function() {
             });
         }
         for (var person of nodes) {
+            if (!network[person.name]) continue; // if they don't talk
+
             for (var other in network[person.name].edges) {
+                var o = _.find(nodes, (p) => p.name === other);
+                if (!o) { // if not found, they don't speak. add them.
+                    o = {
+                        name: other,
+                        lines: 0,
+                        x: ~~(Math.random() * w),
+                        y: ~~(Math.random() * h)
+                    };
+                    nodes.push(o);
+                }
+
                 edges.push({
                     source: person,
-                    target: _.find(nodes, (p) => p.name === other),
+                    target: o,
                     length: network[person.name].edges[other] // number of times spoken to
                 });
             }

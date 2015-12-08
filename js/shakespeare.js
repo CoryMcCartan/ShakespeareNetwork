@@ -60,7 +60,7 @@ window.Play = function(xml) {
     };
 
     this.countLines = function(el) {
-        return this.getText(el).count("\n") + 1;
+        return el.$$("milestone[unit=ftln]").length;
     };
 
     this.getSpeaker = function(el) {
@@ -79,6 +79,12 @@ window.Play = function(xml) {
         }
         
         return speaker;
+    };
+
+    this.getTarget = function(el) {
+        var list = Array.prototype.slice.call(el.children);
+        var str = extractText(list);
+        return _.last(str.split(" ")).split(".")[0].toUpperCase();
     };
 
     var extractText = function(list) {

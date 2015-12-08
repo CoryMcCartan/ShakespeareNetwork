@@ -13,6 +13,7 @@ function onLoadPlay(xml) {
     var list = play.getScenes();
     list.push("Combined"); // to see entire play
     var datalist = $("#loc-list");
+    datalist.innerHTML = null; // clear previous
     for (var s of list) {
         var el = document.createElement("option");
         el.value = s;
