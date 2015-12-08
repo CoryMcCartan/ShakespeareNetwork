@@ -1,0 +1,28 @@
+body {
+    background-color: #fcfcfc;
+}
+html * {
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+svg {
+    background-color: transparent;
+    overflow: visible;
+}
+
+form {
+    display: inline-block;
+    margin: 0 1em 1em 0;
+}
+
+div.page-content {
+    padding: 1em;
+}
+
+div.vis {
+    margin: 2em 0;
+}
+
+th {
+    cursor: pointer;
+}

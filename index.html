@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Shakespeare's Linguistic  Networks</title>
+
+		<link rel="stylesheet" href="css/main.css">
+
+		<link rel="stylesheet" href="/bower_components/material-design-lite/material.min.css">
+		<script src="/bower_components/material-design-lite/material.min.js"></script>
+		<link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	</head>
+	<body class="mdl-layout mdl-layout--fixed-header">
+    <header class="mdl-layout__header">
+    <div class="mdl-layout__header-row">
+    <span class="mdl-layout-title">Shakespeare's Linguistic  Networks</span>
+    </div>
+    </header>
+
+    <main class="mdl-layout__content">
+    <div class="page-content">
+        <form action="#">
+            <div class="mdl-textfield mdl-js-textfield">
+                <input class="mdl-textfield__input" type="text" id="name">
+                <label class="mdl-textfield__label" for="location">Play...</label>
+            </div>
+            <button id="load" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+                Load
+            </button>
+        </form>
+        <form action="#">
+            <div class="mdl-textfield mdl-js-textfield">
+                <input class="mdl-textfield__input" type="text" id="location">
+                <label class="mdl-textfield__label" for="location">Text Location...</label>
+            </div>
+            <button id="go" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+                Go
+            </button>
+        </form>
+
+        <div id="chord" class="vis">
+        </div>
+
+        <div id="graph" class="vis">
+        </div>
+
+        <table id="stats" class="mdl-data-table mdl-shadow--2dp">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    </main>
+
+
+    <script src="bower_components/d3/d3.js"></script>
+    <script src="bower_components/qwest/qwest.min.js"></script>
+    <script src="bower_components/underscore/underscore-min.js"></script>
+    <script src="bower_components/underscore.string/dist/underscore.string.min.js"></script>
+    <script src="js/lib.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/analyzer.js"></script>
+    <script src="js/shakespeare.js"></script>
+    <script src="js/main.js"></script>
+	</body>
+</html>
