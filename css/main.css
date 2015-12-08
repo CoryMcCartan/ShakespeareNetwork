@@ -49,6 +49,14 @@ span.spacer {
     display: none;
 }
 
+div.slider {
+    display: inline-block;
+    width: 200px;
+}
+div.slider > input {
+    display: inline-block;
+}
+
 input:-webkit-autofill {
     -webkit-box-shadow: -1px -1px 1px 1000px #fcfcfc inset;
 }

@@ -84,7 +84,8 @@ window.Analyzer = (function() {
                 var target = play.getTarget(delivery);
                 if (target === "ASIDE") {
                     sp = speaker;  
-                } else if (target !== "" && target !== "SINGS") {
+                } else if (target !== "" && target !== "SINGS"
+                    && target !== "(READS)") {
                     sp = target;
                 } else {
                     lastSpeaker = speaker;
@@ -141,6 +142,7 @@ window.Analyzer = (function() {
                 }
             }
         }
+
         // quickly tally up degrees
         for (var person in characters) {
             characters[person].degrees = _.keys(characters[person].edges).length;

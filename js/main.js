@@ -31,11 +31,20 @@ function onNetwork(networks) {
 }
 
 function showData() {
-    var value = $("#location").value.split(":")[0].toLowerCase() || "combined";
-    var network = networks[value];
+    var which = $("#location").value.split(":")[0].toLowerCase() || "combined";
+    var network = networks[which];
+
+    var minLines = Math.exp($("#min-lines").value) - 1;
+    var minDegrees = Math.exp($("#min-degrees").value) - 1;
+    var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
+    var maxDegrees = _.reduce(network, (c, v) => Math.max(c, v.degrees), 0);
+
+    $("#min-lines").max = Math.log(maxLines);
+    $("#min-degrees").max = Math.log(maxDegrees);
+
     Displayer.makeStatTable(network);
-    Displayer.makeNetworkGraph(network);
-    Displayer.makeChordDiagram(network);
+    Displayer.makeNetworkGraph(network, minLines, minDegrees);
+    Displayer.makeChordDiagram(network, minLines, minDegrees);
 }
 
 function loadPlay(name, callback) {
@@ -56,4 +65,6 @@ function setupEventHandlers() {
     $("button#go").onclick = showData;
     $("button#load").onclick = () => 
         loadPlay($("#name").value, onLoadPlay);
+    $("#min-lines").onchange = showData;
+    $("#min-degrees").onchange = showData;
 }

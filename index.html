@@ -25,7 +25,7 @@
         <main class="mdl-layout__content">
         <div class="page-content">
             <form action="#">
-                <div class="mdl-textfield mdl-js-textfield">
+                <div class="mdl-textfield mdl-js-textfield" style="width: 250px;">
                     <input class="mdl-textfield__input" list="play-list" 
                         value="Hamlet" autocomplete="off" type="text" id="name">
                     <label class="mdl-textfield__label" for="location">Play...</label>
@@ -36,7 +36,7 @@
             </form>
             <form action="#">
                 <span class="spacer"></span>
-                <div class="mdl-textfield mdl-js-textfield" style="width: 150px;">
+                <div class="mdl-textfield mdl-js-textfield" style="width: 120px;">
                     <input class="mdl-textfield__input" list="loc-list" type="text" 
                         value="Combined" autocomplete="off" id="location">
                     <label class="mdl-textfield__label" for="location">Text Location...</label>
@@ -44,6 +44,19 @@
                 <button id="go" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
                     Go
                 </button>
+            </form>
+            <span class="spacer"></span>
+            <form action="#">
+                <div class="slider">
+                    Minimum Lines:
+                    <input id="min-lines" class="mdl-slider mdl-js-slider" type="range"
+                      min="0" max="100" step="0.01" value="0" tabindex="0">
+                </div>
+                <div class="slider">
+                    Minimum Interactions:
+                    <input id="min-degrees" class="mdl-slider mdl-js-slider" type="range"
+                      min="0" max="30" step="0.04" value="0" tabindex="0">
+                </div>
             </form>
 
             <div id="progress" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>

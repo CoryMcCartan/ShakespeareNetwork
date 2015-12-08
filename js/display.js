@@ -6,10 +6,9 @@ var Displayer = (function() {
     var stats, previousSort;
     var parentEl = $("#data > div");
 
-    self.makeNetworkGraph = function(network) {
+    self.makeNetworkGraph = function(network, minLines, minDegrees) {
         const w = parentEl.getBoundingClientRect().width;
         const h = 600;
-        const nodeColor = "#1c3";
         const edgeColor = "#aaa";
 
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
@@ -45,11 +44,15 @@ var Displayer = (function() {
         });
 
         // nodes and edges
-        var graphData = processNetwork(network, w, h);
+        var graphData = processNetwork(network, w, h, minLines, minDegrees);
 
         var nodes = graph.append("g").attr("id", "nodes");
         var edges = graph.append("g").attr("id", "edges");
         var node, edge;
+
+        var color = d3.scale.linear()
+            .domain([0, maxLength])
+            .range(["#08a", "#1b3"])
 
         // node setup
         node = nodes.selectAll(".node")
@@ -60,7 +63,7 @@ var Displayer = (function() {
             .call(force.drag);
         node.append("circle")
             .attr("r", (d) => 4 + 120 * d.lines / totalLines)
-            .style("fill", nodeColor)
+            .style("fill", (d) => color(d.degrees))
             .style("opacity", 0.7)
             .style("stroke", "white")
             .style("stroke-width", 2)
@@ -103,14 +106,20 @@ var Displayer = (function() {
     };
 
     // turn into list of nodes and edges
-    var processNetwork = function(network, w, h) {
+    var processNetwork = function(network, w, h, minLines, minDegrees) {
         var nodes = [];
         var edges = [];
+        minLines = minLines || 0;
+        minDegrees = minDegrees || 0;
 
         for (var person in network) {
+            if (network[person].degrees < minDegrees) continue;
+            if (network[person].lines < minLines) continue;
+
             nodes.push({
                 name: person,
                 lines: network[person].lines,
+                degrees: network[person].degrees,
                 x: ~~(Math.random() * w),
                 y: ~~(Math.random() * h)
             });
@@ -120,15 +129,7 @@ var Displayer = (function() {
 
             for (var other in network[person.name].edges) {
                 var o = _.find(nodes, (p) => p.name === other);
-                if (!o) { // if not found, they don't speak. add them.
-                    o = {
-                        name: other,
-                        lines: 0,
-                        x: ~~(Math.random() * w),
-                        y: ~~(Math.random() * h)
-                    };
-                    nodes.push(o);
-                }
+                if (!o) continue;
 
                 edges.push({
                     source: person,
@@ -144,7 +145,7 @@ var Displayer = (function() {
         };
     };
 
-    self.makeChordDiagram = function(network) {
+    self.makeChordDiagram = function(network, minLines, minDegrees) {
         const w = parentEl.getBoundingClientRect().width;
         const h = 600;
         const innerRadius = Math.min(w, h) * .4;
@@ -163,7 +164,7 @@ var Displayer = (function() {
             .attr("transform", "translate(" + w/2 + "," + h/2 + ")");
 
 
-        var chordData = createChordMatrix(network);
+        var chordData = createChordMatrix(network, minLines, minDegrees);
 
         var chord = d3.layout.chord()
             .padding(0.05)
@@ -212,27 +213,38 @@ var Displayer = (function() {
             .enter().append("path")
             .attr("class", "chord")
             .attr("d", d3.svg.chord().radius(innerRadius))
-            .style("fill", (d) => color(4*d.source.value))
+            .style("fill", (d) => {
+                if (d.source.index === d.target.index) { // soliloquy
+                    return "#cb0";
+                } else {
+                    return color(4*d.source.value);
+                }
+            })
             .style("opacity", 0.8);
 
     };
 
-    var createChordMatrix = function(network) {
-        var l = _.keys(network).length;
-        var matrix = new Array(l); // create square matrix
+    var createChordMatrix = function(network, minLines, minDegrees) {
+        minLines = minLines || 0;
+        minDegrees = minDegrees || 0;
 
         var index = {};
 
         // compute a unique index
         var i = 0;
         for (var person in network) {
+            if (network[person].degrees < minDegrees) continue;
+            if (network[person].lines < minLines) continue;
+
             index[person] = i++; 
         }
 
         var invert = _.invert(index); // reverse lookup
+        var l = _.keys(index).length;
+        var matrix = new Array(l);
 
         // generate matrix
-        for (var person in network) {
+        for (var person in index) {
             var x = index[person];
             matrix[x] = new Array(l);
 
