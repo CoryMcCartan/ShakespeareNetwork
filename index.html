@@ -11,55 +11,121 @@
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 	</head>
 	<body class="mdl-layout mdl-layout--fixed-header">
-    <header class="mdl-layout__header">
-    <div class="mdl-layout__header-row">
-    <span class="mdl-layout-title">Shakespeare's Linguistic  Networks</span>
-    </div>
-    </header>
-
-    <main class="mdl-layout__content">
-    <div class="page-content">
-        <form action="#">
-            <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input" type="text" id="name">
-                <label class="mdl-textfield__label" for="location">Play...</label>
+        <!-- NAV BAR -->
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title">Shakespeare's Linguistic  Networks</span>
+                <div class="mdl-layout-spacer"></div>
+                <nav class="mdl-navigation">
+                </nav>
             </div>
-            <button id="load" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
-                Load
-            </button>
-        </form>
-        <form action="#">
-            <div class="mdl-textfield mdl-js-textfield">
-                <input class="mdl-textfield__input" type="text" id="location">
-                <label class="mdl-textfield__label" for="location">Text Location...</label>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="mdl-layout__content">
+        <div class="page-content">
+            <form action="#">
+                <div class="mdl-textfield mdl-js-textfield">
+                    <input class="mdl-textfield__input" list="play-list" 
+                        value="Hamlet" autocomplete="off" type="text" id="name">
+                    <label class="mdl-textfield__label" for="location">Play...</label>
+                </div>
+                <button id="load" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+                    Load
+                </button>
+            </form>
+            <form action="#">
+                <span class="spacer"></span>
+                <div class="mdl-textfield mdl-js-textfield" style="width: 150px;">
+                    <input class="mdl-textfield__input" list="loc-list" type="text" 
+                        value="Combined" autocomplete="off" id="location">
+                    <label class="mdl-textfield__label" for="location">Text Location...</label>
+                </div>
+                <button id="go" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+                    Go
+                </button>
+            </form>
+
+            <div id="progress" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
+
+
+            <div id="data">
+                <table id="stats" class="mdl-data-table mdl-shadow--2dp">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+
+                <div id="vis" class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+                    <div class="mdl-tabs__tab-bar">
+                        <a href="#graph-panel" class="mdl-tabs__tab is-active">Network View</a>
+                        <a href="#chord-panel" class="mdl-tabs__tab">Cirle View</a>
+                    </div>
+
+                    <div class="mdl-tabs__panel is-active" id="graph-panel">
+                        <div id="graph" class="vis"></div>
+                    </div>
+
+                    <div class="mdl-tabs__panel" id="chord-panel">
+                        <div id="chord" class="vis"></div>
+                    </div>
+                </div>
             </div>
-            <button id="go" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
-                Go
-            </button>
-        </form>
-
-        <div id="chord" class="vis">
         </div>
+        </main>
 
-        <div id="graph" class="vis">
-        </div>
+        <!--DATALISTS-->
+        <datalist id="play-list">
+            <option value="All's Well That Ends Well"></option>
+            <option value="Antony and Cleopatra"></option>
+            <option value="As You Like It"></option>
+            <option value="Comedy of Errors"></option>
+            <option value="Coriolanus"></option>
+            <option value="Cymbeline"></option>
+            <option value="Hamlet"></option>
+            <option value="Henry IV, Part I"></option>
+            <option value="Henry IV, Part II"></option>
+            <option value="Henry V"></option>
+            <option value="Henry VI, Part I"></option>
+            <option value="Henry VI, Part II"></option>
+            <option value="Henry VI, Part III"></option>
+            <option value="Henry VIII"></option>
+            <option value="Julius Caesar"></option>
+            <option value="King John"></option>
+            <option value="King Lear"></option>
+            <option value="Love's Labour's Lost"></option>
+            <option value="Macbeth"></option>
+            <option value="Measure for Measure"></option>
+            <option value="Merchant of Venice"></option>
+            <option value="Merry Wives of Windsor"></option>
+            <option value="Midsummer Night's Dream"></option>
+            <option value="Much Ado about Nothing"></option>
+            <option value="Othello"></option>
+            <option value="Pericles"></option>
+            <option value="Richard II"></option>
+            <option value="Richard III"></option>
+            <option value="Romeo and Juliet"></option>
+            <option value="Taming of the Shrew"></option>
+            <option value="Tempest"></option>
+            <option value="Timon of Athens"></option>
+            <option value="Titus Andronicus"></option>
+            <option value="Troilus and Cressida"></option>
+            <option value="Twelfth Night"></option>
+            <option value="Two Gentlemen of Verona"></option>
+            <option value="Winter's Tale"></option>
+        </datalist>
+        <datalist id="loc-list">
+        </datalist>
 
-        <table id="stats" class="mdl-data-table mdl-shadow--2dp">
-            <thead></thead>
-            <tbody></tbody>
-        </table>
-    </div>
-    </main>
 
-
-    <script src="bower_components/d3/d3.js"></script>
-    <script src="bower_components/qwest/qwest.min.js"></script>
-    <script src="bower_components/underscore/underscore-min.js"></script>
-    <script src="bower_components/underscore.string/dist/underscore.string.min.js"></script>
-    <script src="js/lib.js"></script>
-    <script src="js/display.js"></script>
-    <script src="js/analyzer.js"></script>
-    <script src="js/shakespeare.js"></script>
-    <script src="js/main.js"></script>
+        <!-- SCRIPTS -->
+        <script src="bower_components/d3/d3.js"></script>
+        <script src="bower_components/qwest/qwest.min.js"></script>
+        <script src="bower_components/underscore/underscore-min.js"></script>
+        <script src="bower_components/underscore.string/dist/underscore.string.min.js"></script>
+        <script src="js/lib.js"></script>
+        <script src="js/display.js"></script>
+        <script src="js/analyzer.js"></script>
+        <script src="js/shakespeare.js"></script>
+        <script src="js/main.js"></script>
 	</body>
 </html>

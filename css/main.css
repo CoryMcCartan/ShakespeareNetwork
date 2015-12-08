@@ -19,10 +19,36 @@ div.page-content {
     padding: 1em;
 }
 
+div#data {
+    display: flex;
+}
+div#data > * {
+    margin: 1em;
+}
+
+div#vis {
+    flex-basis: 80vw;
+}
+table#stats {
+    flex-basis: 20vw;
+}
+
 div.vis {
-    margin: 2em 0;
+    margin-top: 3em;
 }
 
 th {
     cursor: pointer;
+}
+
+span.spacer {
+    display: inline-block;
+    width: 1em;
+}
+#progress {
+    display: none;
+}
+
+input:-webkit-autofill {
+    -webkit-box-shadow: -1px -1px 1px 1000px #fcfcfc inset;
 }

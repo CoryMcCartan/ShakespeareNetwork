@@ -15,6 +15,22 @@ window.Play = function(xml) {
             .$("div2[n='" + scene + "']");
     };
 
+    this.getScenes = function() {
+        var scenelist = [];
+        var acts = this.countActs();
+        for (var a = 1; a <= acts; a++) {
+            var act = this.getAct (a);
+            var scenes = this.countScenes(act);
+            for (var s = 1; s <= scenes; s++) {
+                var scene = act.$$("div2")[s - 1];
+                var list = Array.prototype.slice.call(scene.$("head").children);
+                scenelist.push(a + "." + s);
+            }
+        }
+
+        return scenelist;
+    };
+
     this.countActs = function() {
         return xml.$$("div1").length;   
     };
@@ -49,21 +65,39 @@ window.Play = function(xml) {
 
     this.getSpeaker = function(el) {
         var s_el = el.$("speaker");
-        if (!!s_el) {
+        var speaker;
+
+        if (!!s_el) { // if normal
             var list = Array.prototype.slice.call(s_el.children);
-            return extractText(list);
-        } else {
-            return el.attributes.who.value.split("_")[0].slice(1).toUpperCase(); // dirty way
+            speaker = extractText(list);
+        } else { // no speaker sub element
+            speaker = el.attributes.who.value.split("_")[0].slice(1).toUpperCase(); // dirty way
         }
+
+        if (speaker.split("/").length > 1) { // two possible characters
+            speaker = speaker.split("/")[0]; // pick the first one 
+        }
+        
+        return speaker;
     };
 
     var extractText = function(list) {
         var text = "";
         for (let el of list) {
-            if (el.tagName === "lb") { // line break
-                text += "\n"; 
-            } else {
-                text += el.textContent;
+            switch(el.tagName) {
+                case "w":
+                case "c":
+                case "pc":
+                case "foreign":
+                    text += el.textContent;
+                    break;
+                case "lb":
+                    text += "\n"; 
+                    break;
+                case "q": // quoted text: recursion
+                    var newlist = Array.prototype.slice.call(el.children);
+                    text += extractText(newlist);
+                    break;
             }
         }
 

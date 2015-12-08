@@ -3,10 +3,7 @@
 window.Analyzer = (function() {
     var self = {};
 
-    self.analyzePlay = function(xml) {
-        var play = new Play(xml);
-        window.play = play;
-
+    self.analyzePlay = function(play) {
         var networks = {};
         
         // iterate over each scene
@@ -15,16 +12,16 @@ window.Analyzer = (function() {
             var act = play.getAct (a);
             var scenes = play.countScenes(act);
             for (var s = 1; s <= scenes; s++) {
-                var scene = play.getScene(act, s);
+                var scene = act.$$("div2")[s - 1];
 
-                networks[a + "." + s] = self.getNetwork(scene);
+                networks[a + "." + s] = self.getNetwork(play, scene);
             }
         }
 
         self.onNetwork(networks);
     };
 
-    self.getNetwork = function(scene) {
+    self.getNetwork = function(play, scene) {
         var network = {};
         var lastSpeaker;
 

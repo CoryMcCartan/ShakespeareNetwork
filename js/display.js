@@ -4,79 +4,11 @@ var Displayer = (function() {
     var self = {};
 
     var stats, previousSort;
-
-    self.makeChordDiagram = function(network) {
-        const w = window.innerWidth - 100;
-        const h = 500;
-        const innerRadius = Math.min(w, h) * .41;
-        const outerRadius = innerRadius * 1.1;
-
-        $("#chord").innerHTML = null; // clear previous
-        var graph = d3.select("#chord")
-            .append("svg")
-            .attr("width", w)
-            .attr("height", h)
-            .append("g")
-            .attr("transform", "translate(" + w/2 + "," + h/2 + ")");
-
-
-        var chordData = createChordMatrix(network);
-
-        var chord = d3.layout.chord()
-            .padding(0.05)
-            .sortSubgroups(d3.descending)
-            .matrix(chordData.matrix);
-
-        var color = d3.scale.category20();
-        var fade = function(opacity) {
-            return function(g, i) {
-                graph.selectAll(".chord path")
-                    .filter((d)=> d.source.index !== i && d.target.index !== i)
-                    .transition()
-                    .style("opacity", opacity);
-            };
-        }
-
-        var arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius);
-
-        var g = graph.selectAll(".arc")
-            .data(chord.groups)
-            .enter().append("g")
-            .attr("class", "arc")
-            .on("mouseover", fade(.1))
-            .on("mouseout", fade(1));
-        g.append("path")
-            .style("fill", (d) => color(d.index))
-            .style("stroke", (d) => color(d.index))
-            .attr("d", arc);
-        g.append("text")
-            .each((d) => d.angle = (d.startAngle + d.endAngle) / 2)
-            .attr("dy", "0.35em")
-            .attr("font-size", 10)
-            .attr("font-weight", "bold")
-            .attr("text-anchor", (d) => d.angle > Math.PI ? "end" : null)
-            .attr("transform", (d) =>  {
-                return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-                + "translate(" + (innerRadius + 26) + ")"
-                + (d.angle > Math.PI ? "rotate(180)" : "");
-            })
-        .text((d) => chordData.people[d.index]);
-        
-        graph.selectAll("path.chord")
-            .data(chord.chords)
-            .enter().append("path")
-            .attr("class", "chord")
-            .attr("d", d3.svg.chord().radius(innerRadius))
-            .style("fill", (d) => color(d.index))
-            .style("stroke", "white")
-            .style("opacity", 1);
-
-    };
-
+    var parentEl = $("#data > div");
 
     self.makeNetworkGraph = function(network) {
-        const w = window.innerWidth - 100;
-        const h = 500;
+        const w = parentEl.getBoundingClientRect().width;
+        const h = 600;
         const nodeColor = "#1c3";
         const edgeColor = "#aaa";
 
@@ -93,11 +25,11 @@ var Displayer = (function() {
         // force directed layout
         var force = d3.layout.force()
             .size([w, h])
-            .charge(-500)
+            .charge(-250)
             .gravity(0.5)
             .friction(0.5)
             .linkDistance((d) => 
-                persons + 0.7*h * (0.3 + Math.pow(d.length, -3.5)))
+                persons + 0.5*h * (0.4 + Math.pow(d.length, -3.5)))
             .linkStrength(0.8)
             .on("tick", function() {
                 node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
@@ -127,7 +59,7 @@ var Displayer = (function() {
             .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
             .call(force.drag);
         node.append("circle")
-            .attr("r", (d) => 4 + 100 * d.lines / totalLines)
+            .attr("r", (d) => 4 + 120 * d.lines / totalLines)
             .style("fill", nodeColor)
             .style("opacity", 0.7)
             .style("stroke", "white")
@@ -199,6 +131,79 @@ var Displayer = (function() {
         };
     };
 
+    self.makeChordDiagram = function(network) {
+        const w = parentEl.getBoundingClientRect().width;
+        const h = 600;
+        const innerRadius = Math.min(w, h) * .4;
+        const outerRadius = innerRadius * 1.1;
+
+        var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
+        var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
+        var persons = _.keys(network).length;
+
+        $("#chord").innerHTML = null; // clear previous
+        var graph = d3.select("#chord")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h)
+            .append("g")
+            .attr("transform", "translate(" + w/2 + "," + h/2 + ")");
+
+
+        var chordData = createChordMatrix(network);
+
+        var chord = d3.layout.chord()
+            .padding(0.05)
+            .sortSubgroups(d3.descending)
+            .matrix(chordData.matrix);
+
+        var color = d3.scale.linear()
+            .domain([0, 2*Math.pow(maxLines, 0.6)])
+            .range(["#ccc", "#a00"])
+        var fade = function(opacity) {
+            return function(g, i) {
+                graph.selectAll(".chord")
+                    .filter((d)=> d.source.index !== i && d.target.index !== i)
+                    .transition()
+                    .style("opacity", opacity);
+            };
+        }
+
+        var arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+
+        var g = graph.selectAll(".arc")
+            .data(chord.groups)
+            .enter().append("g")
+            .attr("class", "arc")
+            .on("mouseover", fade(.1))
+            .on("mouseout", fade(0.8));
+        g.append("path")
+            .style("fill", (d) => color(d.value))
+            .style("stroke", "white")
+            .attr("d", arc);
+        g.append("text")
+            .each((d) => d.angle = (d.startAngle + d.endAngle) / 2)
+            .attr("dy", "0.35em")
+            .attr("font-size", 10)
+            .attr("font-weight", "bold")
+            .attr("text-anchor", (d) => d.angle > Math.PI ? "end" : null)
+            .attr("transform", (d) =>  {
+                return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+                + "translate(" + (innerRadius + 26) + ")"
+                + (d.angle > Math.PI ? "rotate(180)" : "");
+            })
+        .text((d) => chordData.people[d.index]);
+        
+        graph.selectAll("path.chord")
+            .data(chord.chords)
+            .enter().append("path")
+            .attr("class", "chord")
+            .attr("d", d3.svg.chord().radius(innerRadius))
+            .style("fill", (d) => color(4*d.source.value))
+            .style("opacity", 0.8);
+
+    };
+
     var createChordMatrix = function(network) {
         var l = _.keys(network).length;
         var matrix = new Array(l); // create square matrix
@@ -230,14 +235,26 @@ var Displayer = (function() {
     };
 
     self.makeStatTable = function(_stats) {
-        stats = _stats;
+        stats = {};
+        // find total
+        var total = {lines: 0, degrees: _.keys(_stats).length};
+        for (var p in _stats) {
+            total.lines += _stats[p].lines;
+            stats[p] = _stats[p];
+        }
+        stats["TOTAL"] = total;
+
+        // clear table
+        $("table#stats > thead").innerHTML = null;
+        $("table#stats > tbody").innerHTML = null;
+        
         displayTable(null);
     };
 
     var displayTable = function(sortOn) {
         // create the header
         var thead = d3.select("table#stats > thead").selectAll("th") // pick el for header
-            .data(["Character", "Lines", "Degrees"]) // list column titles
+            .data(["Character", "Lines", "Interactions"]) // list column titles
             .enter().append("th").text(_.identity) // fill elements
             .on("click", displayTable.bind(this)); // event listener for sort
 
@@ -262,7 +279,7 @@ var Displayer = (function() {
                     return stats[b].lines - stats[a].lines;
                 });
                 break;
-            case "Degrees":
+            case "Interactions":
                 tr.sort(function(a, b) {
                     return stats[b].degrees - stats[a].degrees;
                 });
