@@ -6,30 +6,35 @@ window.Play = function(xml) {
     var persons = xml.$$("listPerson > person");
 
     this.getAct = function(act) {
-        return xml.$("div1[n='" + act + "']"); 
+        return xml.$$("div1")[act]; 
     };
 
     this.getScene = function(el, scene) {
-        var act = el.attributes.n.value;
-        return xml.$("div1[n='" + act + "']")
-            .$("div2[n='" + scene + "']");
+        return el.$$("div2")[scene];
     };
 
     this.getScenes = function() {
         var scenelist = [];
         var acts = this.countActs();
-        for (var a = 1; a <= acts; a++) {
-            var act = this.getAct (a);
+        for (var a = 0; a < acts; a++) {
+            var act = this.getAct(a);
             var scenes = this.countScenes(act);
-            for (var s = 1; s <= scenes; s++) {
-                var scene = act.$$("div2")[s - 1];
-                var list = Array.prototype.slice.call(scene.$("head").children);
-                scenelist.push(a + "." + s);
+            for (var s = 0; s < scenes; s++) {
+                var scene = this.getScene(act, s);
+                scenelist.push(this.getLocation(act, scene));
+            }
+            if (scenes === 0) {
+                var list = Array.prototype.slice.call(act.$("head").children);
+                scenelist.push(extractText(list));
             }
         }
 
         return scenelist;
     };
+
+    this.getLocation = function(act, scene) {
+        return act.attributes.n.value + "." + scene.attributes.n.value;
+    }
 
     this.countActs = function() {
         return xml.$$("div1").length;   

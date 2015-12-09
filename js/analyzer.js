@@ -8,13 +8,14 @@ window.Analyzer = (function() {
         
         // iterate over each scene
         var acts = play.countActs();
-        for (var a = 1; a <= acts; a++) {
-            var act = play.getAct (a);
+        for (var a = 0; a < acts; a++) {
+            var act = play.getAct(a);
             var scenes = play.countScenes(act);
-            for (var s = 1; s <= scenes; s++) {
-                var scene = act.$$("div2")[s - 1];
+            for (var s = 0; s < scenes; s++) {
+                var scene = play.getScene(act, s);;
 
-                networks[a + "." + s] = self.getNetwork(play, scene);
+                var str = play.getLocation(act, scene);
+                networks[str] = self.getNetwork(play, scene);
             }
         }
 
@@ -104,9 +105,18 @@ window.Analyzer = (function() {
 
             // add 1 to the edge
             if (!network[speaker].edges[sp]) {
-                network[speaker].edges[sp] = 0;
+                network[speaker].edges[sp] = {
+                    count: 0,
+                    lines: 0,
+                    sentiment: 0
+                };
             }
-            network[speaker].edges[sp]++;
+            
+            var text = play.getText(el);
+
+            network[speaker].edges[sp].count++;
+            network[speaker].edges[sp].lines += num;
+            network[speaker].edges[sp].sentiment += Sentiment.extract(text) / num;
 
             lastSpeaker = speaker;
         }
@@ -114,6 +124,8 @@ window.Analyzer = (function() {
         // quickly tally up degrees
         for (var person in network) {
             network[person].degrees = _.keys(network[person].edges).length;
+            network[person].sentiment = _.reduce(network[person].edges, 
+                (c, v) => c + v.sentiment/network[person].degrees, 0);
         }
 
         return network; 
@@ -135,7 +147,9 @@ window.Analyzer = (function() {
                 var edges = net[person].edges;
                 for (var i in edges) {
                     if (characters[person].edges[i]) {
-                        characters[person].edges[i] += net[person].edges[i];
+                        characters[person].edges[i].count += net[person].edges[i].count;
+                        characters[person].edges[i].lines += net[person].edges[i].lines;
+                        characters[person].edges[i].sentiment += net[person].edges[i].sentiment;
                     } else {
                         characters[person].edges[i] = net[person].edges[i];
                     }
@@ -146,6 +160,8 @@ window.Analyzer = (function() {
         // quickly tally up degrees
         for (var person in characters) {
             characters[person].degrees = _.keys(characters[person].edges).length;
+            characters[person].sentiment = _.reduce(characters[person].edges, 
+                (c, v) => c + v.sentiment/characters[person].degrees, 0);
         }
 
         return characters;

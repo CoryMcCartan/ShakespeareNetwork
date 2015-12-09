@@ -5,12 +5,95 @@ var Displayer = (function() {
 
     var stats, previousSort;
     var parentEl = $("#data > div");
+    const w = 600;
+    const h = 600;
+
+    self.makeStreamGraph = function(networks, minLines, minDegrees) {
+        var streamData = createStreamMatrix(networks, minLines, minDegrees);
+
+        var maxLength = _.reduce(_.omit(networks, "combined"), (c, v) => 
+            Math.max(c, _.reduce(v, (p, n) => Math.max(p, n.degrees), 0)), 0);
+        var maxLines = _.reduce(networks.combined, (c, v) => 
+            Math.max(c, v.lines), 0);
+        var numScenes = streamData.scenes.length;
+        var persons = _.keys(streamData.people).length;
+
+        var stack = d3.layout.stack().offset("silhoutte");
+        var layer = stack(streamData.matrix);
+
+        var x = d3.scale.linear()
+            .domain([0, numScenes - 1])
+            .range([0, w]);
+        var y = d3.scale.linear()
+            .domain([0, maxLength])
+            .range([0, 0.5*h]);
+
+        var color = d3.scale.category20();
+
+        var area = d3.svg.area()
+            .x((d) => x(d.x))
+            .y0((d) => 0.5*h + y(0*d.y + d.y0))
+            .y1((d) => 0.5*h + y(d.y + d.y0));
+
+        $("#stream").innerHTML = null; // clear previous graph
+        var stream = d3.select("#stream").append("svg");
+        stream.attr("width", w);
+        stream.attr("height", h);
+
+        var el = $("#player-name");
+        stream.selectAll("path")
+            .data(layer)
+            .enter().append("path")
+            .attr("d", area)
+            .on("mouseover", (e, i) => {
+                var name = streamData.people[i];
+                el.innerHTML = name;
+            })
+            .style("fill", (d, i) => color(i));
+    };
+    var createStreamMatrix = function(networks, minLines, minDegrees) {
+        var index = {};       
+        var network = networks.combined;
+        var scenes = _.difference(_.keys(networks), ["combined"]); // list of scenes
+
+        // compute a unique index
+        var i = 0;
+        for (var person in network) {
+            if (network[person].degrees < minDegrees) continue;
+            if (network[person].lines < minLines) continue;
+
+            index[person] = i++; 
+        }
+        
+        var invert = _.invert(index); //rverse lookup
+        var l = _.keys(index).length;
+        var matrix = new Array(l);
+
+        // generate matrix
+        for (var person in index) {
+            matrix[index[person]] = new Array(scenes.length);
+
+            for (var s = 0; s < scenes.length; s++) {
+                var scene = scenes[s];
+                network = networks[scene];
+
+                var degrees = (network[person] || {degrees: 0}).degrees;
+
+                matrix[index[person]][s] = {
+                    x: s,
+                    y: degrees
+                };
+            }
+        }
+
+        return {
+            matrix: matrix,
+            people: invert,
+            scenes: scenes
+        };
+    };
 
     self.makeNetworkGraph = function(network, minLines, minDegrees) {
-        const w = parentEl.getBoundingClientRect().width;
-        const h = 600;
-        const edgeColor = "#aaa";
-
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
         var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
         var maxLength = _.reduce(network, (c, v) => Math.max(c, v.degrees), 0);
@@ -24,11 +107,11 @@ var Displayer = (function() {
         // force directed layout
         var force = d3.layout.force()
             .size([w, h])
-            .charge(-250)
+            .charge(-450)
             .gravity(0.5)
             .friction(0.5)
             .linkDistance((d) => 
-                persons + 0.5*h * (0.4 + Math.pow(d.length, -3.5)))
+                persons + 0.5*h * (0.3 + Math.pow(d.length, -3.0)))
             .linkStrength(0.8)
             .on("tick", function() {
                 node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
@@ -48,11 +131,16 @@ var Displayer = (function() {
 
         var nodes = graph.append("g").attr("id", "nodes");
         var edges = graph.append("g").attr("id", "edges");
+        var maxSent = _.reduce(network, (c, v) => Math.max(c, v.sentiment), 0);
+        var minSent = _.reduce(network, (c, v) => Math.min(c, v.sentiment), 0);
         var node, edge;
 
-        var color = d3.scale.linear()
+        var nodeColor = d3.scale.linear()
             .domain([0, maxLength])
             .range(["#08a", "#1b3"])
+        var edgeColor = d3.scale.linear()
+            .domain([minSent, maxSent])
+            .range(["#a00", "#992", "#0a3"]);
 
         // node setup
         node = nodes.selectAll(".node")
@@ -63,7 +151,7 @@ var Displayer = (function() {
             .call(force.drag);
         node.append("circle")
             .attr("r", (d) => 4 + 120 * d.lines / totalLines)
-            .style("fill", (d) => color(d.degrees))
+            .style("fill", (d) => nodeColor(d.degrees))
             .style("opacity", 0.7)
             .style("stroke", "white")
             .style("stroke-width", 2)
@@ -83,7 +171,7 @@ var Displayer = (function() {
                 n.source.name + " -> " + (n.target|| {name: " "}).name); // how to ID edges
         edge.enter().append("line")
             .attr("class", "edge")
-            .attr("stroke", edgeColor)
+            .attr("stroke", (d) => edgeColor(d.sentiment))
             .style("stroke-width", (d) => 1 + 3 * d.length / maxLength)
             .attr("stroke-linecap", "round")
             .attr("x1", (d) => d.source.x)
@@ -104,13 +192,9 @@ var Displayer = (function() {
 
         window.force = force;
     };
-
-    // turn into list of nodes and edges
     var processNetwork = function(network, w, h, minLines, minDegrees) {
         var nodes = [];
         var edges = [];
-        minLines = minLines || 0;
-        minDegrees = minDegrees || 0;
 
         for (var person in network) {
             if (network[person].degrees < minDegrees) continue;
@@ -134,7 +218,8 @@ var Displayer = (function() {
                 edges.push({
                     source: person,
                     target: o,
-                    length: network[person.name].edges[other] // number of times spoken to
+                    length: network[person.name].edges[other].count, // number of times spoken to
+                    sentiment: network[person.name].edges[other].sentiment
                 });
             }
         }
@@ -146,13 +231,13 @@ var Displayer = (function() {
     };
 
     self.makeChordDiagram = function(network, minLines, minDegrees) {
-        const w = parentEl.getBoundingClientRect().width;
-        const h = 600;
-        const innerRadius = Math.min(w, h) * .4;
+        const innerRadius = Math.min(w, h) * .35;
         const outerRadius = innerRadius * 1.1;
 
         var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
+        var maxSent = _.reduce(network, (c, v) => Math.max(c, v.sentiment), 0);
+        var minSent = _.reduce(network, (c, v) => Math.min(c, v.sentiment), 0);
         var persons = _.keys(network).length;
 
         $("#chord").innerHTML = null; // clear previous
@@ -161,7 +246,8 @@ var Displayer = (function() {
             .attr("width", w)
             .attr("height", h)
             .append("g")
-            .attr("transform", "translate(" + w/2 + "," + h/2 + ")");
+            .attr("transform", 
+                "translate(" + (w/2 + 20) + "," + (h/2 + 20) + ")");
 
 
         var chordData = createChordMatrix(network, minLines, minDegrees);
@@ -172,8 +258,11 @@ var Displayer = (function() {
             .matrix(chordData.matrix);
 
         var color = d3.scale.linear()
-            .domain([0, 2*Math.pow(maxLines, 0.6)])
+            .domain([0, 2*Math.pow(maxLines, 0.72)])
             .range(["#ccc", "#a00"])
+        var sentimentColor = d3.scale.linear()
+            .domain([minSent, maxSent])
+            .range(["#c00", "#aa2", "#0a1"])
         var fade = function(opacity) {
             return function(g, i) {
                 graph.selectAll(".chord")
@@ -190,7 +279,7 @@ var Displayer = (function() {
             .enter().append("g")
             .attr("class", "arc")
             .on("mouseover", fade(.1))
-            .on("mouseout", fade(0.8));
+            .on("mouseout", fade(0.85));
         g.append("path")
             .style("fill", (d) => color(d.value))
             .style("stroke", "white")
@@ -215,19 +304,15 @@ var Displayer = (function() {
             .attr("d", d3.svg.chord().radius(innerRadius))
             .style("fill", (d) => {
                 if (d.source.index === d.target.index) { // soliloquy
-                    return "#cb0";
+                    return "#78f";
                 } else {
-                    return color(4*d.source.value);
+                    var s = chordData.sentiment[d.source.index][d.target.index];
+                    return sentimentColor(s);
                 }
             })
-            .style("opacity", 0.8);
-
+            .style("opacity", 0.85);
     };
-
     var createChordMatrix = function(network, minLines, minDegrees) {
-        minLines = minLines || 0;
-        minDegrees = minDegrees || 0;
-
         var index = {};
 
         // compute a unique index
@@ -242,19 +327,24 @@ var Displayer = (function() {
         var invert = _.invert(index); // reverse lookup
         var l = _.keys(index).length;
         var matrix = new Array(l);
+        var sentiments = new Array(l);
 
         // generate matrix
         for (var person in index) {
             var x = index[person];
             matrix[x] = new Array(l);
+            sentiments[x] = new Array(l);
 
             for (var y = 0; y < l; y++) {
-                matrix[x][y] = network[person].edges[invert[y]] || 0;
+                var obj = network[person].edges[invert[y]];
+                matrix[x][y] = obj ? obj.lines : 0;
+                sentiments[x][y] = obj ? obj.sentiment : 0;
             }
         }
 
         return {
             people: invert, 
+            sentiment: sentiments,
             matrix: matrix
         };
     };
@@ -275,7 +365,6 @@ var Displayer = (function() {
         
         displayTable(null);
     };
-
     var displayTable = function(sortOn) {
         // create the header
         var thead = d3.select("table#stats > thead").selectAll("th") // pick el for header

@@ -45,6 +45,7 @@ function showData() {
     Displayer.makeStatTable(network);
     Displayer.makeNetworkGraph(network, minLines, minDegrees);
     Displayer.makeChordDiagram(network, minLines, minDegrees);
+    //Displayer.makeStreamGraph(networks, minLines, minDegrees);
 }
 
 function loadPlay(name, callback) {
