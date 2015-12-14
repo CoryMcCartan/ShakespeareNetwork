@@ -236,8 +236,8 @@ var Displayer = (function() {
 
         var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
-        var maxSent = _.reduce(network, (c, v) => Math.max(c, v.sentiment), 0);
-        var minSent = _.reduce(network, (c, v) => Math.min(c, v.sentiment), 0);
+        var maxSent = _.reduce(network, (c, v) => Math.max(c, v.sentiment),-99);
+        var minSent = _.reduce(network, (c, v) => Math.min(c, v.sentiment), 99);
         var persons = _.keys(network).length;
 
         $("#chord").innerHTML = null; // clear previous

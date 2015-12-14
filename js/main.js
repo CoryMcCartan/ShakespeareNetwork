@@ -46,6 +46,8 @@ function showData() {
     Displayer.makeNetworkGraph(network, minLines, minDegrees);
     Displayer.makeChordDiagram(network, minLines, minDegrees);
     //Displayer.makeStreamGraph(networks, minLines, minDegrees);
+    
+    return false; // don't reload page
 }
 
 function loadPlay(name, callback) {
@@ -60,6 +62,8 @@ function loadPlay(name, callback) {
             callback(xhr.responseXML);
             $("#progress").style.display = "none";
         });
+
+    return false; // don't reload page
 }
 
 function setupEventHandlers() {
