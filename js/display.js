@@ -97,7 +97,12 @@ var Displayer = (function() {
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
         var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
         var maxLength = _.reduce(network, (c, v) => Math.max(c, v.degrees), 0);
-        var persons = _.keys(network).length;
+        var center = _.reduce(network, (c, v, i, net) => 
+                      net[c].degrees > v.degrees ? c : i, _.keys(network)[0]);
+
+        var graphData = processNetwork(network, w, h, minLines, 
+                            minDegrees, center);
+        var persons = graphData.nodes.length;
 
         $("#graph").innerHTML = null; // clear previous graph
         var graph = d3.select("#graph").append("svg");
@@ -107,13 +112,9 @@ var Displayer = (function() {
         // force directed layout
         var force = d3.layout.force()
             .size([w, h])
-            .charge(-450)
-            .gravity(0.5)
-            .friction(0.5)
-            .linkDistance((d) => 
-                persons + 0.5*h * (0.3 + Math.pow(d.length, -3.0)))
-            .linkStrength(0.8)
-            .on("tick", function() {
+            .charge((d) => d.name === center ? -2e5/persons : -1.4*w - 1.1e5/persons)
+            .gravity(0.6)
+            .on("tick", () => {
                 node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
 
                 edge
@@ -127,7 +128,6 @@ var Displayer = (function() {
         });
 
         // nodes and edges
-        var graphData = processNetwork(network, w, h, minLines, minDegrees);
 
         var nodes = graph.append("g").attr("id", "nodes");
         var edges = graph.append("g").attr("id", "edges");
@@ -150,7 +150,7 @@ var Displayer = (function() {
             .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
             .call(force.drag);
         node.append("circle")
-            .attr("r", (d) => 4 + 120 * d.lines / totalLines)
+            .attr("r", (d) => 4 + 140 * d.lines / totalLines)
             .style("fill", (d) => nodeColor(d.degrees))
             .style("opacity", 0.7)
             .style("stroke", "white")
@@ -192,7 +192,7 @@ var Displayer = (function() {
 
         window.force = force;
     };
-    var processNetwork = function(network, w, h, minLines, minDegrees) {
+    var processNetwork = function(network, w, h, minLines, minDegrees, center) {
         var nodes = [];
         var edges = [];
 
@@ -204,8 +204,9 @@ var Displayer = (function() {
                 name: person,
                 lines: network[person].lines,
                 degrees: network[person].degrees,
-                x: ~~(Math.random() * w),
-                y: ~~(Math.random() * h)
+                x: person === center ? w/2 : ~~(Math.random() * w), // center the center person, otherwise random
+                y: person === center ? h/2 : ~~(Math.random() * h),
+                fixed: person === center // don't move the center
             });
         }
         for (var person of nodes) {
