@@ -1,8 +1,15 @@
+var DEFAULT_PLAY = "Hamlet";
+var DEFAULT_LOCATION = "Combined";
+
 function main() {
     setupEventHandlers();
 
+    var location = getCachedLocation(DEFAULT_PLAY, DEFAULT_LOCATION);
+    $("#name").value = location.play;
+    $("#location").value = location.location;
+
     Analyzer.onNetwork = onNetwork;
-    loadPlay("Hamlet", onLoadPlay);
+    loadPlay(onLoadPlay);
 }
 
 function onLoadPlay(xml) {
@@ -31,8 +38,11 @@ function onNetwork(networks) {
 }
 
 function showData() {
-    var which = $("#location").value.split(":")[0].toLowerCase() || "combined";
+    var which = $("#location").value.split(":")[0].toLowerCase() ||
+            DEFAULT_LOCATION.toLowerCase();
     var network = networks[which];
+
+    localStorage.location = which;
 
     var minLines = Math.exp($("#min-lines").value) - 1;
     var minDegrees = Math.exp($("#min-degrees").value) - 1;
@@ -50,9 +60,11 @@ function showData() {
     return false; // don't reload page
 }
 
-function loadPlay(name, callback) {
-    name = name || $("#name").value;
+function loadPlay(callback) {
+    var name = $("#name").value || DEFAULT_PLAY;
     callback = callback || NULLF;
+
+    localStorage.play = name;
 
     // progress bar
     $("#progress").style.display = "block";
@@ -68,8 +80,14 @@ function loadPlay(name, callback) {
 
 function setupEventHandlers() {
     $("button#go").onclick = showData;
-    $("button#load").onclick = () => 
-        loadPlay($("#name").value, onLoadPlay);
+    $("button#load").onclick = loadPlay.bind(this, onLoadPlay);
     $("#min-lines").onchange = showData;
     $("#min-degrees").onchange = showData;
 }
+
+function getCachedLocation(play, location) {
+    return {
+        play: localStorage.play || play,
+        location: localStorage.location || location
+    };
+};

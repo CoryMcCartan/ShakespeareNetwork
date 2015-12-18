@@ -79,3 +79,7 @@ div.slider > input {
 input:-webkit-autofill {
     -webkit-box-shadow: -1px -1px 1px 1000px #fcfcfc inset;
 }
+
+.mdl-tabs, .mdl-tabs__panel, .mdl-tabs__tab-bar {
+    overflow: visible;
+}

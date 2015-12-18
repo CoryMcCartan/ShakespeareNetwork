@@ -112,7 +112,7 @@ var Displayer = (function() {
         // force directed layout
         var force = d3.layout.force()
             .size([w, h])
-            .charge((d) => d.name === center ? -2e5/persons : -1.4*w - 1.1e5/persons)
+            .charge((d) => -1.5*w - 4e4/persons - 1e4*d.lines/maxLines)
             .gravity(0.6)
             .on("tick", () => {
                 node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
@@ -135,12 +135,12 @@ var Displayer = (function() {
         var minSent = _.reduce(network, (c, v) => Math.min(c, v.sentiment), 0);
         var node, edge;
 
-        var nodeColor = d3.scale.linear()
-            .domain([0, maxLength])
-            .range(["#08a", "#1b3"])
-        var edgeColor = d3.scale.linear()
-            .domain([minSent, maxSent])
-            .range(["#a00", "#992", "#0a3"]);
+        var nodeColor = d3.scale.log()
+            .domain([1, maxLength])
+            .range(["#07a", "#1b3"])
+        var edgeColor = "#888";
+        var getId = (d) => d.source.name + "_" + (d.target|| {name: " "}).name; // how to ID edges
+        var getLoc = (a, d) => a*(d.x2-d.x1)
 
         // node setup
         node = nodes.selectAll(".node")
@@ -150,7 +150,7 @@ var Displayer = (function() {
             .attr("transform", (d) => "translate(" + d.x + "," + d.y + ")")
             .call(force.drag);
         node.append("circle")
-            .attr("r", (d) => 4 + 140 * d.lines / totalLines)
+            .attr("r", (d) => 5 + 140 * d.lines / totalLines)
             .style("fill", (d) => nodeColor(d.degrees))
             .style("opacity", 0.7)
             .style("stroke", "white")
@@ -167,24 +167,23 @@ var Displayer = (function() {
 
         // edge setup
         edge = edges.selectAll("line.edge")
-            .data(graphData.edges, (n) => 
-                n.source.name + " -> " + (n.target|| {name: " "}).name); // how to ID edges
+            .data(graphData.edges, getId)
         edge.enter().append("line")
             .attr("class", "edge")
-            .attr("stroke", (d) => edgeColor(d.sentiment))
-            .style("stroke-width", (d) => 1 + 3 * d.length / maxLength)
+            .attr("id", (d) => "--" + getId(d))
+            .attr("stroke", edgeColor)
+            .style("stroke-width", (d) => 1.5 + 3 * d.length / maxLength)
             .attr("stroke-linecap", "round")
             .attr("x1", (d) => d.source.x)
             .attr("y1", (d) => d.source.y)
             .attr("x2", (d) => d.target.x)
             .attr("y2", (d) => d.target.y);
 
-        //reorder
+        // reorder to have nodes cover edges
         d3.selectAll(".node, .edge").sort(function(d1, d2) {
-            if (d1.name) return 1;
+            if (d1.name) return 1; // if a node
             return -1;
         });
-
 
         force.nodes(graphData.nodes);
         force.links(graphData.edges);
@@ -216,11 +215,18 @@ var Displayer = (function() {
                 var o = _.find(nodes, (p) => p.name === other);
                 if (!o) continue;
 
+                if (_.find(edges, (e) => e.source === o && e.target === person)) // reverse node
+                    continue;
+
+                var src = network[person.name].edges[other];
+                var trg = network[other].edges[person.name];
+
                 edges.push({
                     source: person,
                     target: o,
-                    length: network[person.name].edges[other].count, // number of times spoken to
-                    sentiment: network[person.name].edges[other].sentiment
+                    length: src.count, // number of times spoken to
+                    sentiment_s: src.sentiment,
+                    sentiment_t: trg ? trg.sentiment : 0
                 });
             }
         }
@@ -258,12 +264,12 @@ var Displayer = (function() {
             .sortSubgroups(d3.descending)
             .matrix(chordData.matrix);
 
-        var color = d3.scale.linear()
-            .domain([0, 2*Math.pow(maxLines, 0.72)])
-            .range(["#ccc", "#a00"])
+        var color = d3.scale.sqrt()
+            .domain([0, 0.5*maxLines, maxLines])
+            .range(["#cca", "#dc4", "#cb3"])
         var sentimentColor = d3.scale.linear()
-            .domain([minSent, maxSent])
-            .range(["#c00", "#aa2", "#0a1"])
+            .domain([minSent, 0, maxSent])
+            .range(["#c00", "#897", "#0b2"])
         var fade = function(opacity) {
             return function(g, i) {
                 graph.selectAll(".chord")
@@ -271,7 +277,9 @@ var Displayer = (function() {
                     .transition()
                     .style("opacity", opacity);
             };
-        }
+        };
+
+        var getId = (d) => d.source.index + "_" + d.target.index;
 
         var arc = d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius);
 
@@ -305,13 +313,73 @@ var Displayer = (function() {
             .attr("d", d3.svg.chord().radius(innerRadius))
             .style("fill", (d) => {
                 if (d.source.index === d.target.index) { // soliloquy
-                    return "#78f";
+                    return "#58c";
                 } else {
-                    var s = chordData.sentiment[d.source.index][d.target.index];
-                    return sentimentColor(s);
+                    return "url(#" + getId(d) + ")";
                 }
             })
             .style("opacity", 0.85);
+
+
+        var coords = (type, d) => {
+            var adj1s = Math.PI/2 - d.source.startAngle;
+            var adj2s = Math.PI/2 - d.target.startAngle;
+            var adj1e = Math.PI/2 - d.source.endAngle;
+            var adj2e = Math.PI/2 - d.target.endAngle;
+            var adj1 = 0.5 * (adj1s + adj1e);
+            var adj2 = 0.5 * (adj2s + adj2e);
+
+            var x1 = 0.5 * Math.cos(adj1);
+            var y1 = 0.5 * Math.sin(adj1);
+            var x2 = 0.5 * Math.cos(adj2);
+            var y2 = 0.5 * Math.sin(adj2);
+
+            var corners = [x1, y1, x2, y2];
+
+            var h = 0.5 * (Math.sin(adj1) - Math.sin(adj2));
+            var w = 0.5 * (Math.cos(adj1) - Math.cos(adj2));
+            
+//             var corners = [w<0 ? -w : 0, h<0 ? -h : 0, w<0 ? 0 : w, h<0 ? 0: h];
+            var corners;
+            if (w < 0) {
+                if (h < 0) {
+                    corners = [-w, 0, 0, -h];
+                } else {
+                    corners = [-w, h, 0, 0];
+                }
+            } else {
+                if (h < 0) {
+                    corners = [0, 0, w, -h];
+                } else {
+                    corners = [0, h, w, 0];
+                }
+                
+            }
+
+            return corners[type]; 
+        };
+
+        graph.append("defs").selectAll("linearGradient")
+            .data(chord.chords)
+            .enter().append("linearGradient")
+            .attr("id", getId)
+            .attr("x1", coords.bind(null, 0))
+            .attr("y1", coords.bind(null, 1))
+            .attr("x2", coords.bind(null, 2))
+            .attr("y2", coords.bind(null, 3))
+            .attr("spreadMethod", "pad")
+            .selectAll("stop")
+            .data((d) => {
+                var s_s = chordData.sentiment[d.source.index][d.target.index];
+                var s_t = chordData.sentiment[d.target.index][d.source.index];
+                return [
+                    {offset: "10%", color: sentimentColor(s_t)},
+                    {offset: "90%", color: sentimentColor(s_s)}
+                ]; 
+            })
+            .enter().append("stop")
+            .attr("offset", (d) => d.offset)
+            .attr("stop-color", (d) => d.color)
     };
     var createChordMatrix = function(network, minLines, minDegrees) {
         var index = {};

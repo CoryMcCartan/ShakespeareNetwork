@@ -81,19 +81,13 @@
                     <div class="mdl-tabs__panel is-active" id="graph-panel">
                         <div id="graph" class="vis"></div>
                         <div class="explanation">
-                        The graph is made up of nodes and edges. Each node
-                        corresponds to a single character, and each edge
-                        represents an interaction between two characters.  The
-                        size of the nodes is proportional to the number of
+                        Each node corresponds to a single character, and each
+                        edge represents an interaction between two characters.
+                        The size of the nodes is proportional to the number of
                         lines a character has. A thiker edge means more
-                        interactions.  The distance between nodes is also
-                        roughly proportional to the relative closeness of the
-                        characters.  Nodes are colored more green if a
+                        interactions.  Nodes are colored more green if a
                         character has many interactions with others, and more
-                        blue if they have fewer interactions.  The color of the
-                        edges represents the average sentiment of words spoken
-                        between the characters, with green representing a
-                        positive sentiment and red a more negative one.
+                        blue if they have fewer interactions.  
                         </div>
                     </div>
 
@@ -108,10 +102,13 @@
                         connected to other characters by bands, whose width at
                         each end represents the number of lines that character
                         speaks to the other.  The color of the bands is
-                        important, too. A blue band represents a soliloquy.  A
-                        green band represents a generally positive sentiment in
-                        the speech, while a red band represents a generally
-                        negative sentiment.
+                        important, too. A blue band represents a soliloquy.
+                        Other bands have a color at each end, which represents
+                        the sentiment in the speech of one character towards
+                        another. For example, if characters A and B are
+                        connected by a band that is green near A and red near
+                        B, then A speaks positively to B while B speaks
+                        negatively to A.
                         </div>
                     </div>
 
