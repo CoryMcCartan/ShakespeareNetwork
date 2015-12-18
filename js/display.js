@@ -190,9 +190,9 @@ var Displayer = (function() {
         var sentimentColor = d3.scale.linear()
             .domain([minSent, 0, maxSent])
             .range(["#c00", "#897", "#0b2"]);
-        var bandColor = d3.scale.sqrt()
-            .domain([0, maxDegrees])
-            .range(["#aaa", "#c21"]);
+        var bandColor = d3.scale.linear()
+            .domain([0, maxLines/maxDegrees])
+            .range(["#aaa", "#c43"]);
         var fade = function(opacity) {
             return function(g, i) {
                 graph.selectAll(".chord")
