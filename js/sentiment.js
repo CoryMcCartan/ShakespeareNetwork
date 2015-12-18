@@ -1,3 +1,7 @@
+/*
+ * Analyzes the sentiment of a text with the AFINN library.
+ */
+
 "use strict";
 
 window.Sentiment = (function() {
@@ -5,9 +9,12 @@ window.Sentiment = (function() {
 
     var afinn;
 
-    qwest.get("data/sentiment/AFINN.json", {dataType: "json"})
-    .then(function(xhr, response) {
-        afinn = response;     
+    xhr({
+        url: "data/sentiment/afinn.json",
+        type: "json",
+        onload: (response) => {
+            afinn = response;
+        }
     });
 
     self.extract = function(text) {
@@ -20,7 +27,7 @@ window.Sentiment = (function() {
             score += afinn[token];
         }
 
-        return score;
+        return score / tokens.length;
     }; 
 
     var tokenize = function(str) {

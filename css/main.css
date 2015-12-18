@@ -67,6 +67,10 @@ span.spacer {
     display: none;
 }
 
+label.mdl-switch {
+    float: right;
+}
+
 div.slider {
     display: inline-block;
     width: 200px;

@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="encoding" content="utf8">
 
 		<title>Shakespeare's Linguistic  Networks</title>
 
@@ -31,7 +32,7 @@
                 <form action="#">
                     <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
                         <input class="mdl-textfield__input" list="play-list" 
-                            value="Hamlet" autocomplete="off" type="text" id="name">
+                            autocomplete="off" type="text" id="name">
                         <label class="mdl-textfield__label" for="location">Play...</label>
                     </div>
                     <button id="load" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
@@ -41,7 +42,7 @@
                 <form action="#">
                     <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
                         <input class="mdl-textfield__input" list="loc-list" type="text" 
-                            value="Combined" autocomplete="off" id="location">
+                            autocomplete="off" id="location">
                         <label class="mdl-textfield__label" for="location">Text Location...</label>
                     </div>
                     <button id="go" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
@@ -92,6 +93,11 @@
                     </div>
 
                     <div class="mdl-tabs__panel" id="chord-panel">
+                        <label for="sentiment-switch" class="mdl-switch mdl-js-switch">
+                            <input type="checkbox" checked id="sentiment-switch" class="mdl-switch__input" />
+                            &nbsp; &nbsp; Show sentiment?
+<!--                             <span class="mdl-switch__label">Show sentiment?</span> -->
+                        </label>
                         <div id="chord" class="vis"></div>
                         <div class="explanation">
                         Characters are arranged around the outside of the
@@ -167,14 +173,15 @@
 
         <!-- SCRIPTS -->
         <script src="bower_components/d3/d3.js"></script>
-        <script src="bower_components/qwest/qwest.min.js"></script>
         <script src="bower_components/underscore/underscore-min.js"></script>
         <script src="bower_components/underscore.string/dist/underscore.string.min.js"></script>
         <script src="js/lib.js"></script>
         <script src="js/sentiment.js"></script>
         <script src="js/display.js"></script>
         <script src="js/analyzer.js"></script>
-        <script src="js/shakespeare.js"></script>
+        <script src="js/play.js"></script>
+        <script src="js/ui.js"></script>
+        <script src="js/glue.js"></script>
         <script src="js/main.js"></script>
 	</body>
 </html>

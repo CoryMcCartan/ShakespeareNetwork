@@ -1,6 +1,16 @@
+/*
+ * Analyzes play data to create interaction networks.
+ *
+ * Call analyzePlay with a Play() object.  When done, an "analyze" event will be
+ * triggered.
+ *
+ * Call getCombined to calculate combined statistics across an entire play.
+ */
+
+
 "use strict";
 
-window.Analyzer = (function() {
+window.Analyzer = function(sentiment) {
     var self = {};
 
     self.analyzePlay = function(play) {
@@ -15,26 +25,25 @@ window.Analyzer = (function() {
                 var scene = play.getScene(act, s);;
 
                 var str = play.getLocation(act, scene);
-                networks[str] = self.getNetwork(play, scene);
+                networks[str] = getNetwork(play, scene);
             }
         }
 
-        self.onNetwork(networks);
+        Mediator.trigger("analyze", networks); 
     };
 
-    self.getNetwork = function(play, scene) {
+    var getNetwork = function(play, scene) {
         var network = {};
         var lastSpeaker;
         var characters = []; // list of those on stage
 
         // generate network
-        var els = scene.children;
-        var length = els.length;
+        var length = scene.children.length;
         outer:
-        for (var i = 0; i < length; i++) {
-            var el = els[i]; 
+        for (var i = 0; i < length; i++) { // iterate over children of scene
+            var el = scene.children[i]; 
             switch(el.tagName) {
-                case "sp":
+                case "sp": // a speech
                     if (!el.attributes.who) continue; // not a real line
                     var speaker = play.getSpeaker(el);
                     var num = play.countLines(el);
@@ -43,62 +52,62 @@ window.Analyzer = (function() {
                         network[speaker] = {lines: 0,  edges: {}};
                     }
 
-                    network[speaker].lines += num;
+                    network[speaker].lines += num; // tally lines spoken
 
                     if (characters.indexOf(speaker) === -1) { // if somehow slipped through
                         characters.push(speaker);
                     }
 
                     break;
-                case "stage":
+                case "stage": // a stage direction
                     var type = el.attributes.type.value;
                     if (type === "entrance") {
                         var people = el.attributes.who.value.split(" ");
                         people = _.map(people, (p) => 
                                 p.split("_")[0].slice(1).toUpperCase());
-
-                        characters = _.union(people, characters);
+ 
+                        characters = _.union(people, characters); // add character to list
                     } else if (type === "exit") {
                         var people = el.attributes.who.value.split(" ");
                         people = _.map(people, (p) => 
                                 p.split("_")[0].slice(1).toUpperCase());
 
-                        characters = _.difference(characters, people);
+                        characters = _.difference(characters, people); // remove character from list
                     } else if (type === "business") {
                         var target = play.getTarget(el);
-                        if (target === "WITHDRAW") {
+                        if (target === "WITHDRAW") { // WITHRAW is sometimes used as a way of exiting temporarily
                             var people = el.attributes.who.value.split(" ");
                             people = _.map(people, (p) => 
                                     p.split("_")[0].slice(1).toUpperCase());
 
-                            characters = _.difference(characters, people);
+                            characters = _.difference(characters, people); // remove character from list
                         }
                     }
 
-                default:
+                default: // other; skip.
                     continue outer;
             }
             // determine who they are speaking to
-            var delivery = el.$("stage[type=delivery]");
+            var delivery = el.$("stage[type=delivery]"); // an aside or similar
             var sp;
             if (delivery) { // aside or "to" someone
                 var target = play.getTarget(delivery);
-                if (target === "ASIDE") {
+                if (target === "ASIDE") { // if aside, they speak to themselves
                     sp = speaker;  
-                } else if (target !== "" && target !== "SINGS"
+                } else if (target !== "" && target !== "SINGS" // they speak to another character
                     && target !== "(READS)") {
                     sp = target;
-                } else {
+                } else { // otherwise, store this speaker and move on
                     lastSpeaker = speaker;
                     continue;
                 }
             } else if (characters.length === 1) { // alone on stage
                 sp = speaker;
-            } else if (characters.length === 2) {
-                sp = _.difference(characters, [speaker])[0]; // find th listener 
-            } else if (lastSpeaker) {
+            } else if (characters.length === 2) { // one other character
+                sp = _.difference(characters, [speaker])[0]; // find the listener 
+            } else if (lastSpeaker) { // default: assume they speak to whoever spoke last
                 sp = lastSpeaker;
-            } else {
+            } else { // otherwise, store this speaker and move on
                 lastSpeaker = speaker;
                 continue;
             } 
@@ -116,7 +125,7 @@ window.Analyzer = (function() {
 
             network[speaker].edges[sp].count++;
             network[speaker].edges[sp].lines += num;
-            network[speaker].edges[sp].sentiment += Sentiment.extract(text) / num;
+            network[speaker].edges[sp].sentiment += sentiment.extract(text);
 
             lastSpeaker = speaker;
         }
@@ -167,7 +176,5 @@ window.Analyzer = (function() {
         return characters;
     };
 
-    self.onNetwork = NULLF;
-
     return self;
-})();
+};

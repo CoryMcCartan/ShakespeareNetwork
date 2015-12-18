@@ -1,3 +1,7 @@
+/*
+ * Handles all data graphics.
+ */
+
 "use strict";
 
 var Displayer = (function() {
@@ -7,91 +11,6 @@ var Displayer = (function() {
     var parentEl = $("#data > div");
     const w = 600;
     const h = 600;
-
-    self.makeStreamGraph = function(networks, minLines, minDegrees) {
-        var streamData = createStreamMatrix(networks, minLines, minDegrees);
-
-        var maxLength = _.reduce(_.omit(networks, "combined"), (c, v) => 
-            Math.max(c, _.reduce(v, (p, n) => Math.max(p, n.degrees), 0)), 0);
-        var maxLines = _.reduce(networks.combined, (c, v) => 
-            Math.max(c, v.lines), 0);
-        var numScenes = streamData.scenes.length;
-        var persons = _.keys(streamData.people).length;
-
-        var stack = d3.layout.stack().offset("silhoutte");
-        var layer = stack(streamData.matrix);
-
-        var x = d3.scale.linear()
-            .domain([0, numScenes - 1])
-            .range([0, w]);
-        var y = d3.scale.linear()
-            .domain([0, maxLength])
-            .range([0, 0.5*h]);
-
-        var color = d3.scale.category20();
-
-        var area = d3.svg.area()
-            .x((d) => x(d.x))
-            .y0((d) => 0.5*h + y(0*d.y + d.y0))
-            .y1((d) => 0.5*h + y(d.y + d.y0));
-
-        $("#stream").innerHTML = null; // clear previous graph
-        var stream = d3.select("#stream").append("svg");
-        stream.attr("width", w);
-        stream.attr("height", h);
-
-        var el = $("#player-name");
-        stream.selectAll("path")
-            .data(layer)
-            .enter().append("path")
-            .attr("d", area)
-            .on("mouseover", (e, i) => {
-                var name = streamData.people[i];
-                el.innerHTML = name;
-            })
-            .style("fill", (d, i) => color(i));
-    };
-    var createStreamMatrix = function(networks, minLines, minDegrees) {
-        var index = {};       
-        var network = networks.combined;
-        var scenes = _.difference(_.keys(networks), ["combined"]); // list of scenes
-
-        // compute a unique index
-        var i = 0;
-        for (var person in network) {
-            if (network[person].degrees < minDegrees) continue;
-            if (network[person].lines < minLines) continue;
-
-            index[person] = i++; 
-        }
-        
-        var invert = _.invert(index); //rverse lookup
-        var l = _.keys(index).length;
-        var matrix = new Array(l);
-
-        // generate matrix
-        for (var person in index) {
-            matrix[index[person]] = new Array(scenes.length);
-
-            for (var s = 0; s < scenes.length; s++) {
-                var scene = scenes[s];
-                network = networks[scene];
-
-                var degrees = (network[person] || {degrees: 0}).degrees;
-
-                matrix[index[person]][s] = {
-                    x: s,
-                    y: degrees
-                };
-            }
-        }
-
-        return {
-            matrix: matrix,
-            people: invert,
-            scenes: scenes
-        };
-    };
 
     self.makeNetworkGraph = function(network, minLines, minDegrees) {
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
@@ -237,11 +156,12 @@ var Displayer = (function() {
         };
     };
 
-    self.makeChordDiagram = function(network, minLines, minDegrees) {
+    self.makeChordDiagram = function(network, minLines, minDegrees, sentiment) {
         const innerRadius = Math.min(w, h) * .35;
         const outerRadius = innerRadius * 1.1;
 
         var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
+        var maxDegrees = _.reduce(network, (c, v) => Math.max(c, v.degrees), 0);
         var totalLines = _.reduce(network, (c, v) => c + v.lines, 0);
         var maxSent = _.reduce(network, (c, v) => Math.max(c, v.sentiment),-99);
         var minSent = _.reduce(network, (c, v) => Math.min(c, v.sentiment), 99);
@@ -266,10 +186,13 @@ var Displayer = (function() {
 
         var color = d3.scale.sqrt()
             .domain([0, 0.5*maxLines, maxLines])
-            .range(["#cca", "#dc4", "#cb3"])
+            .range(["#cca", "#dc4", "#cb3"]);
         var sentimentColor = d3.scale.linear()
             .domain([minSent, 0, maxSent])
-            .range(["#c00", "#897", "#0b2"])
+            .range(["#c00", "#897", "#0b2"]);
+        var bandColor = d3.scale.sqrt()
+            .domain([0, maxDegrees])
+            .range(["#aaa", "#c21"]);
         var fade = function(opacity) {
             return function(g, i) {
                 graph.selectAll(".chord")
@@ -314,8 +237,10 @@ var Displayer = (function() {
             .style("fill", (d) => {
                 if (d.source.index === d.target.index) { // soliloquy
                     return "#58c";
-                } else {
+                } else if (sentiment) {
                     return "url(#" + getId(d) + ")";
+                } else {
+                    return bandColor(d.source.value);
                 }
             })
             .style("opacity", 0.85);
@@ -415,6 +340,91 @@ var Displayer = (function() {
             people: invert, 
             sentiment: sentiments,
             matrix: matrix
+        };
+    };
+
+    self.makeStreamGraph = function(networks, minLines, minDegrees) {
+        var streamData = createStreamMatrix(networks, minLines, minDegrees);
+
+        var maxLength = _.reduce(_.omit(networks, "combined"), (c, v) => 
+            Math.max(c, _.reduce(v, (p, n) => Math.max(p, n.degrees), 0)), 0);
+        var maxLines = _.reduce(networks.combined, (c, v) => 
+            Math.max(c, v.lines), 0);
+        var numScenes = streamData.scenes.length;
+        var persons = _.keys(streamData.people).length;
+
+        var stack = d3.layout.stack().offset("silhoutte");
+        var layer = stack(streamData.matrix);
+
+        var x = d3.scale.linear()
+            .domain([0, numScenes - 1])
+            .range([0, w]);
+        var y = d3.scale.linear()
+            .domain([0, maxLength])
+            .range([0, 0.5*h]);
+
+        var color = d3.scale.category20();
+
+        var area = d3.svg.area()
+            .x((d) => x(d.x))
+            .y0((d) => 0.5*h + y(0*d.y + d.y0))
+            .y1((d) => 0.5*h + y(d.y + d.y0));
+
+        $("#stream").innerHTML = null; // clear previous graph
+        var stream = d3.select("#stream").append("svg");
+        stream.attr("width", w);
+        stream.attr("height", h);
+
+        var el = $("#player-name");
+        stream.selectAll("path")
+            .data(layer)
+            .enter().append("path")
+            .attr("d", area)
+            .on("mouseover", (e, i) => {
+                var name = streamData.people[i];
+                el.innerHTML = name;
+            })
+            .style("fill", (d, i) => color(i));
+    };
+    var createStreamMatrix = function(networks, minLines, minDegrees) {
+        var index = {};       
+        var network = networks.combined;
+        var scenes = _.difference(_.keys(networks), ["combined"]); // list of scenes
+
+        // compute a unique index
+        var i = 0;
+        for (var person in network) {
+            if (network[person].degrees < minDegrees) continue;
+            if (network[person].lines < minLines) continue;
+
+            index[person] = i++; 
+        }
+        
+        var invert = _.invert(index); //rverse lookup
+        var l = _.keys(index).length;
+        var matrix = new Array(l);
+
+        // generate matrix
+        for (var person in index) {
+            matrix[index[person]] = new Array(scenes.length);
+
+            for (var s = 0; s < scenes.length; s++) {
+                var scene = scenes[s];
+                network = networks[scene];
+
+                var degrees = (network[person] || {degrees: 0}).degrees;
+
+                matrix[index[person]][s] = {
+                    x: s,
+                    y: degrees
+                };
+            }
+        }
+
+        return {
+            matrix: matrix,
+            people: invert,
+            scenes: scenes
         };
     };
 
