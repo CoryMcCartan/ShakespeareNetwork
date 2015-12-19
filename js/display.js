@@ -343,6 +343,106 @@ var Displayer = (function() {
         };
     };
 
+    self.makePairComparison = function(networks, a, b) {
+        var graphData = extractPairData(networks, a, b);   
+
+        var maxSentA = _.reduce(graphData.matrix[0], (c, v) => 
+                Math.max(c, v.y), -99);
+        var minSentA = _.reduce(graphData.matrix[0], (c, v) => 
+                Math.min(c, v.y), 99);
+        var maxSentB = _.reduce(graphData.matrix[1], (c, v) => 
+                Math.max(c, v.y), -99);
+        var minSentB = _.reduce(graphData.matrix[1], (c, v) => 
+                Math.min(c, v.y), 99);
+        var minSent = Math.min(minSentA, minSentB);
+        var maxSent = Math.max(maxSentA, maxSentB);
+        var numScenes = graphData.scenes.length;
+
+        var stack = d3.layout.stack().offset("silhoutte");
+        var layer = stack(graphData.matrix);
+
+        var x = d3.scale.linear()
+            .domain([0, numScenes - 1])
+            .range([4, w-4]);
+        var y = d3.scale.linear()
+            .domain([minSent, maxSent])
+            .range([h, 36]);
+
+        var color = d3.scale.category10();
+
+        var line = d3.svg.line()
+            .x((d) => x(d.x))
+            .y((d) => y(d.y));
+
+        $("#lineGraph").innerHTML = null; // clear previous graph
+        var graph = d3.select("#lineGraph").append("svg");
+        graph.attr("width", w);
+        graph.attr("height", h);
+
+        graph.selectAll("path")
+            .data(layer)
+            .enter().append("path")
+            .attr("d", line)
+            .attr("fill", "transparent")
+            .attr("stroke-width", 4)
+            .attr("stroke-linecap", "round")
+            .attr("stroke", (d, i) => color(i));
+
+        graph.selectAll("text.key")
+            .data(layer)
+            .enter().append("text")
+            .attr("class", "key")
+            .attr("x", 8)
+            .attr("y", (d, i) => i * 16)
+            .attr("dx", 8)
+            .attr("dy", "0.35em")
+            .attr("font-size", 12)
+            .attr("font-weight", "bold")
+            .attr("fill", (d, i) => color(i))
+            .text((d, i) => i ? b : a);
+
+        graph.selectAll("text.axis")
+            .data(layer)
+            .enter().append("text")
+            .attr
+    };
+    var extractPairData = function(networks, a, b) {
+        var scenes = _.difference(_.keys(networks), ["combined"]); // list of scenes
+        var matrix = [new Array(scenes.length), new Array(scenes.length)];
+
+        for (var s = 0; s < scenes.length; s++) {
+            var network = networks[scenes[s]];
+
+            var sentA = 0;
+            var sentB = 0;
+
+            if (network[a]) {
+                if (network[a].edges[b]) {
+                    sentA = network[a].edges[b].sentiment;
+                }
+            }
+            if (network[b]) {
+                if (network[b].edges[a]) {
+                    sentB = network[b].edges[a].sentiment;
+                }
+            }
+
+            matrix[0][s] = {
+                x: s,
+                y: sentA
+            };
+            matrix[1][s] = {
+                x: s,
+                y: sentB
+            };
+        }
+
+        return {
+            matrix: matrix,
+            scenes: scenes
+        };
+    };
+
     self.makeStreamGraph = function(networks, minLines, minDegrees) {
         var streamData = createStreamMatrix(networks, minLines, minDegrees);
 

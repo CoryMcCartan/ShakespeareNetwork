@@ -32,7 +32,7 @@
                 <form action="#">
                     <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
                         <input class="mdl-textfield__input" list="play-list" 
-                            autocomplete="off" type="text" id="name">
+                            autocomplete="off" type="text" id="name" />
                         <label class="mdl-textfield__label" for="location">Play...</label>
                     </div>
                     <button id="load" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
@@ -77,6 +77,7 @@
                         <a href="#graph-panel" class="mdl-tabs__tab is-active">Network View</a>
                         <a href="#chord-panel" class="mdl-tabs__tab">Circle View</a>
                         <a href="#stream-panel" class="mdl-tabs__tab" style="display: none;">Stream View</a>
+                        <a href="#lineGraph-panel" class="mdl-tabs__tab">Pair Comparison</a>
                     </div>
 
                     <div class="mdl-tabs__panel is-active" id="graph-panel">
@@ -121,6 +122,29 @@
                     <div class="mdl-tabs__panel" id="stream-panel">
                         <span id="player-name"></span>
                         <div id="stream" class="vis"></div>
+                    </div>
+
+                    <div class="mdl-tabs__panel" id="lineGraph-panel">
+                        <form action="#">
+                            <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
+                                <input class="mdl-textfield__input" list="players-list" type="text" 
+                                    autocomplete="off" id="playerA">
+                                <label class="mdl-textfield__label" for="location">First Character</label>
+                            </div>
+                            <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
+                                <input class="mdl-textfield__input" list="players-list" type="text" 
+                                    autocomplete="off" id="playerB">
+                                <label class="mdl-textfield__label" for="location">Second Character</label>
+                            </div>
+                            <button id="comparison" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+                                Load Comparison
+                            </button>
+                        </form>
+                        <div id="lineGraph" class="vis"></div>
+                        <div class="explanation">
+                        The graph displays the scene-by-scene sentiment of words 
+                        exchanged between the pair of characters.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -169,10 +193,12 @@
         </datalist>
         <datalist id="loc-list">
         </datalist>
+        <datalist id="players-list">
+        </datalist>
 
 
         <!-- SCRIPTS -->
-        <script src="bower_components/d3/d3.js"></script>
+        <script src="bower_components/d3/d3.min.js"></script>
         <script src="bower_components/underscore/underscore-min.js"></script>
         <script src="bower_components/underscore.string/dist/underscore.string.min.js"></script>
         <script src="js/lib.js"></script>

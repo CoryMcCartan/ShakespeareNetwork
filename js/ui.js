@@ -35,6 +35,7 @@ window.UI = (function() {
         $("#min-lines").onchange = self.showData;
         $("#min-degrees").onchange = self.showData;
         $("#sentiment-switch").onchange = self.showData;
+        $("button#comparison").onclick = self.showData;
     };
 
     self.getPlayName = function() {
@@ -45,13 +46,23 @@ window.UI = (function() {
         $("#location").value = location;
     };
 
-    self.makeDatalist = function(play) {
+    self.makeDatalists = function(play) {
         // put list of scenes into autocomplete
         var list = play.getScenes();
         list.push("Combined"); // to see entire play
 
         var datalist = $("#loc-list");
         datalist.innerHTML = null; // clear previous
+        for (var s of list) {
+            var el = document.createElement("option");
+            el.value = s;
+            datalist.appendChild(el);
+        }
+
+        var list = _.keys(networks.combined);
+
+        datalist = $("#players-list");
+        datalist.innerHTML = null;
         for (var s of list) {
             var el = document.createElement("option");
             el.value = s;

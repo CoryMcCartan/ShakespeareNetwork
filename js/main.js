@@ -11,13 +11,13 @@ Glue.onanalyze = function(networks) {
     networks.combined = analyzer.getCombined(networks);
     window.networks = networks;
 
+    UI.makeDatalists(play);
     UI.showData();
 };
 
 Glue.onloadraw = (xml) => {
     window.play = new Play(xml);
 
-    UI.makeDatalist(play);
     analyzer.analyzePlay(play);
 };
 
@@ -26,4 +26,6 @@ Glue.ondisplay = (network, minLines, minDegrees, sentiment) => {
     Displayer.makeNetworkGraph(network, minLines, minDegrees);
     Displayer.makeChordDiagram(network, minLines, minDegrees, sentiment);
     //Displayer.makeStreamGraph(networks, minLines, minDegrees);
+    Displayer.makePairComparison(networks, $("#playerA").value, 
+                                 $("#playerB").value);
 };
