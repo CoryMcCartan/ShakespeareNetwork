@@ -192,7 +192,7 @@ var Displayer = (function() {
             .range(["#c00", "#897", "#0b2"]);
         var bandColor = d3.scale.linear()
             .domain([0, maxLines/maxDegrees])
-            .range(["#aaa", "#c43"]);
+            .range(["#a88", "#a10"]);
         var fade = function(opacity) {
             return function(g, i) {
                 graph.selectAll(".chord")
@@ -236,7 +236,7 @@ var Displayer = (function() {
             .attr("d", d3.svg.chord().radius(innerRadius))
             .style("fill", (d) => {
                 if (d.source.index === d.target.index) { // soliloquy
-                    return "#58c";
+                    return sentiment ? "#58c" : "#dc0";
                 } else if (sentiment) {
                     return "url(#" + getId(d) + ")";
                 } else {
@@ -384,6 +384,7 @@ var Displayer = (function() {
             .enter().append("path")
             .attr("d", line)
             .attr("fill", "transparent")
+            .attr("opacity", 0.7)
             .attr("stroke-width", 4)
             .attr("stroke-linecap", "round")
             .attr("stroke", (d, i) => color(i));
