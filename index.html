@@ -77,11 +77,11 @@
                         <a href="#graph-panel" class="mdl-tabs__tab is-active">Network View</a>
                         <a href="#chord-panel" class="mdl-tabs__tab">Circle View</a>
                         <a href="#stream-panel" class="mdl-tabs__tab" style="display: none;">Stream View</a>
-                        <a href="#lineGraph-panel" class="mdl-tabs__tab">Pair Comparison</a>
+                        <a href="#lineGraph-panel" class="mdl-tabs__tab">Character Comparison</a>
                     </div>
 
                     <div class="mdl-tabs__panel is-active" id="graph-panel">
-                        <div id="graph" class="vis"></div>
+                        <div id="networkGraph" class="vis"></div>
                         <div class="explanation">
                         Each node corresponds to a single character, and each
                         edge represents an interaction between two characters.
@@ -97,7 +97,6 @@
                         <label for="sentiment-switch" class="mdl-switch mdl-js-switch">
                             <input type="checkbox" checked id="sentiment-switch" class="mdl-switch__input" />
                             &nbsp; &nbsp; Show sentiment?
-<!--                             <span class="mdl-switch__label">Show sentiment?</span> -->
                         </label>
                         <div id="chord" class="vis"></div>
                         <div class="explanation">
@@ -125,25 +124,32 @@
                     </div>
 
                     <div class="mdl-tabs__panel" id="lineGraph-panel">
+                        <div id="comparison-list"></div>
                         <form action="#">
                             <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
                                 <input class="mdl-textfield__input" list="players-list" type="text" 
-                                    autocomplete="off" id="playerA">
-                                <label class="mdl-textfield__label" for="location">First Character</label>
+                                    autocomplete="off" id="player">
+                                <label class="mdl-textfield__label" for="location">Character</label>
                             </div>
-                            <div class="mdl-textfield mdl-js-textfield" style="width: 240px;">
-                                <input class="mdl-textfield__input" list="players-list" type="text" 
-                                    autocomplete="off" id="playerB">
-                                <label class="mdl-textfield__label" for="location">Second Character</label>
-                            </div>
-                            <button id="comparison" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
-                                Load Comparison
+                            <button id="add-player" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+                                Add Player
                             </button>
                         </form>
-                        <div id="lineGraph" class="vis"></div>
+                        <div id="sentimentGraph" class="vis"></div>
                         <div class="explanation">
-                        The graph displays the scene-by-scene sentiment of words 
-                        exchanged between the pair of characters.
+                        The graph displays the scene-by-scene sentiment of
+                        words exchanged between the pair of characters. Each
+                        line represents a characters sentiment towards the
+                        first character on the list.  If there are only two
+                        characters, a line is plotted for each, representing 
+                        their sentiment towards the other. If there is just one,
+                        the line represents the sentiment of their soliloquys.
+                        </div>
+                        <div id="degreesGraph" class="vis"></div>
+                        <div class="explanation">
+                        The graph displays the scene-by-scene interactions of 
+                        each character.  Each line represents the number of 
+                        different characters a character speaks to.
                         </div>
                     </div>
                 </div>
@@ -196,6 +202,15 @@
         <datalist id="players-list">
         </datalist>
 
+        <el-templates style="display: none">
+            <div class="character">
+                <span class="name"></span>
+                <button class="delete mdl-button mdl-js-button mdl-button--icon">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+        </el-templates>
+
 
         <!-- SCRIPTS -->
         <script src="bower_components/d3/d3.min.js"></script>
@@ -203,10 +218,11 @@
         <script src="bower_components/underscore.string/dist/underscore.string.min.js"></script>
         <script src="js/lib.js"></script>
         <script src="js/sentiment.js"></script>
-        <script src="js/display.js"></script>
+        <script src="js/graphics.js"></script>
         <script src="js/analyzer.js"></script>
         <script src="js/play.js"></script>
         <script src="js/ui.js"></script>
+        <script src="js/storage.js"></script>
         <script src="js/glue.js"></script>
         <script src="js/main.js"></script>
 	</body>

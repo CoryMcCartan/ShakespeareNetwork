@@ -1,38 +1,31 @@
-var DEFAULT_PLAY = "Hamlet";
-var DEFAULT_LOCATION = "Combined";
+/*
+ * The Gluer connects the events, triggers, and objects together to create the
+ * full application
+ */
 
-function main() {
-    UI.setupEventHandlers();
+"use strict";
 
-    window.analyzer = new Analyzer(Sentiment);
-    
-    Mediator.register(Glue);
+window.Glue = {};
 
-    var location = getCachedLocation(DEFAULT_PLAY, DEFAULT_LOCATION);
-    UI.setupPlayName(location.play, location.location);
+Glue.onanalyze = function(networks) {
+    networks.combined = analyzer.getCombined(networks);
+    window.networks = networks;
 
-    loadPlay();
-}
+    UI.makeDatalists(play);
+    UI.showData();
+};
 
+Glue.onloadraw = (xml) => {
+    window.play = new Play(xml);
 
-function loadPlay() {
-    var name = UI.getPlayName();
-    localStorage.play = name;
+    analyzer.analyzePlay(play);
+};
 
-    // progress bar
-    UI.startLongProcess();
-
-    xhr("data/plays/" + name.toLowerCase() + ".xml", (response, xhr) => {
-        Mediator.trigger("loadraw", xhr.responseXML);
-        UI.endLongProcess();
-    });
-
-    return false; // don't reload page
-}
-
-function getCachedLocation(play, location) {
-    return {
-        play: localStorage.play || play,
-        location: localStorage.location || location
-    };
+Glue.ondisplay = (network, minLines, minDegrees, sentiment, comparisonList) => {
+    Displayer.makeStatTable(network);
+    Displayer.makeNetworkGraph(network, minLines, minDegrees);
+    Displayer.makeChordDiagram(network, minLines, minDegrees, sentiment);
+    Displayer.makeStreamGraph(networks, minLines, minDegrees);
+    Displayer.makeComparison(networks, comparisonList);
+    UI.endLongProcess();
 };

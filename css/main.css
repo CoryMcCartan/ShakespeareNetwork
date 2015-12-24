@@ -63,6 +63,32 @@ span.spacer {
     width: 1em;
 }
 
+div.character:first-child {
+    background-color: #aae;
+}
+div.character {
+    background-color: #ddd;
+    padding: 2px 6px;
+    border-radius: 1em;
+    display: inline-block;
+    margin: 8px 8px 0 0;
+}
+.character > .name {
+    font-size: 10pt;
+    padding-left: 4px;
+    height: 12pt;
+}
+button.delete {
+    color: #777;
+    height: 1em;
+}
+button.delete > i.material-icons {
+    font-size: 12pt;
+}
+button.delete:hover {
+    color: #222;
+}
+
 #progress {
     display: none;
 }

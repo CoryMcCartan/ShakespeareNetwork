@@ -1,31 +1,30 @@
-/*
- * The Gluer connects the events, triggers, and objects together to create the
- * full application
- */
+var DEFAULT_PLAY = "Hamlet";
+var DEFAULT_LOCATION = "Combined";
 
-"use strict";
+function main() {
+    UI.setupEventHandlers();
 
-window.Glue = {};
+    window.analyzer = new Analyzer(Sentiment);
+    
+    Mediator.register(Glue);
 
-Glue.onanalyze = function(networks) {
-    networks.combined = analyzer.getCombined(networks);
-    window.networks = networks;
+    UI.refreshUI();
 
-    UI.makeDatalists(play);
-    UI.showData();
-};
+    loadPlay();
+}
 
-Glue.onloadraw = (xml) => {
-    window.play = new Play(xml);
 
-    analyzer.analyzePlay(play);
-};
+function loadPlay() {
+    var name = UI.getPlayName();
+    Storage.set("play", name);
+    $("#comparison-list").innerHTML = null;
 
-Glue.ondisplay = (network, minLines, minDegrees, sentiment) => {
-    Displayer.makeStatTable(network);
-    Displayer.makeNetworkGraph(network, minLines, minDegrees);
-    Displayer.makeChordDiagram(network, minLines, minDegrees, sentiment);
-    //Displayer.makeStreamGraph(networks, minLines, minDegrees);
-    Displayer.makePairComparison(networks, $("#playerA").value, 
-                                 $("#playerB").value);
-};
+    // progress bar
+    UI.startLongProcess();
+
+    xhr("data/plays/" + name.toLowerCase() + ".xml", (response, xhr) => {
+        Mediator.trigger("loadraw", xhr.responseXML);
+    });
+
+    return false; // don't reload page
+}

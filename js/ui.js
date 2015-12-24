@@ -7,12 +7,16 @@
 window.UI = (function() {
     var self = {};
 
+    var comparisonList = [];
+
     self.showData = function() {
+        if (typeof networks === "undefined") return; // need analysis to be done
+
         var which = $("#location").value.split(":")[0].toLowerCase() ||
                 DEFAULT_LOCATION.toLowerCase();
         var network = networks[which];
 
-        localStorage.location = which;
+        Storage.set("location", which);
 
         var minLines = Math.exp($("#min-lines").value) - 1;
         var minDegrees = Math.exp($("#min-degrees").value) - 1;
@@ -23,8 +27,10 @@ window.UI = (function() {
         $("#min-degrees").max = Math.log(maxDegrees);
 
         var sentiment = $("#sentiment-switch").checked;
+        Storage.set("show-sentiment", sentiment);
 
-        Mediator.trigger("display", network, minLines, minDegrees, sentiment);
+        Mediator.trigger("display", network, minLines, minDegrees, sentiment,
+                        comparisonList);
 
         return false; // don't reload page
     };
@@ -35,15 +41,11 @@ window.UI = (function() {
         $("#min-lines").onchange = self.showData;
         $("#min-degrees").onchange = self.showData;
         $("#sentiment-switch").onchange = self.showData;
-        $("button#comparison").onclick = self.showData;
+        $("button#add-player").onclick = self.addPlayer;
     };
 
     self.getPlayName = function() {
         return $("#name").value || DEFAULT_PLAY;
-    };
-    self.setupPlayName = function(name, location) {
-        $("#name").value = name;
-        $("#location").value = location;
     };
 
     self.makeDatalists = function(play) {
@@ -75,6 +77,37 @@ window.UI = (function() {
     };
     self.endLongProcess = function() {
         $("#progress").style.display = "none";
+    };
+
+    self.addPlayer = function() {
+        var name = $("#player").value.toUpperCase();
+        if (name === "") return;
+
+        var item = $("el-templates .character").cloneNode(true); // true for recursive copy
+        item.querySelector(".name").innerHTML = name;
+        item.querySelector(".delete").onclick = self.removePlayer;
+        $("#comparison-list").appendChild(item);
+        comparisonList.push(name);
+        // clear field
+        $("#player").value = "";
+
+        self.showData();
+        
+        return false;
+    };
+    self.removePlayer = function() {
+        var name = this.parentElement.querySelector(".name").innerHTML;
+        this.parentElement.remove();
+        comparisonList = _.without(comparisonList, name);
+
+        self.showData();
+    };
+
+    self.refreshUI = function() {
+        var sentiment = Storage.get("show-sentiment", false) === "true";
+        sentiment ? null : $("#sentiment-switch").click();  // click and switch to off if needed
+        $("#name").value = Storage.get("name", DEFAULT_PLAY);
+        $("#location").value = Storage.get("location", DEFAULT_LOCATION);
     };
 
     return self;

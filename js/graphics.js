@@ -17,21 +17,21 @@ var Displayer = (function() {
         var maxLines = _.reduce(network, (c, v) => Math.max(c, v.lines), 0);
         var maxLength = _.reduce(network, (c, v) => Math.max(c, v.degrees), 0);
         var center = _.reduce(network, (c, v, i, net) => 
-                      net[c].degrees > v.degrees ? c : i, _.keys(network)[0]);
+        net[c].degrees > v.degrees ? c : i, _.keys(network)[0]);
 
         var graphData = processNetwork(network, w, h, minLines, 
-                            minDegrees, center);
+                    minDegrees, center);
         var persons = graphData.nodes.length;
 
-        $("#graph").innerHTML = null; // clear previous graph
-        var graph = d3.select("#graph").append("svg");
+        $("#networkGraph").innerHTML = null; // clear previous graph
+        var graph = d3.select("#networkGraph").append("svg");
         graph.attr("width", w);
         graph.attr("height", h);
 
         // force directed layout
         var force = d3.layout.force()
             .size([w, h])
-            .charge((d) => -1.5*w - 4e4/persons - 1e4*d.lines/maxLines)
+            .charge((d) => -1.7*w - 4e4/persons - 7e3*d.lines/maxLines)
             .gravity(0.6)
             .on("tick", () => {
                 node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
@@ -99,10 +99,7 @@ var Displayer = (function() {
             .attr("y2", (d) => d.target.y);
 
         // reorder to have nodes cover edges
-        d3.selectAll(".node, .edge").sort(function(d1, d2) {
-            if (d1.name) return 1; // if a node
-            return -1;
-        });
+        d3.selectAll(".node, .edge").sort((d1, d2) => d1.name ? 1 : -1);
 
         force.nodes(graphData.nodes);
         force.links(graphData.edges);
@@ -174,7 +171,7 @@ var Displayer = (function() {
             .attr("height", h)
             .append("g")
             .attr("transform", 
-                "translate(" + (w/2 + 20) + "," + (h/2 + 20) + ")");
+                  "translate(" + (w/2 + 20) + "," + (h/2 + 20) + ")");
 
 
         var chordData = createChordMatrix(network, minLines, minDegrees);
@@ -196,10 +193,10 @@ var Displayer = (function() {
         var fade = function(opacity) {
             return function(g, i) {
                 graph.selectAll(".chord")
-                    .filter((d)=> d.source.index !== i && d.target.index !== i)
-                    .transition()
-                    .style("opacity", opacity);
-            };
+                .filter((d)=> d.source.index !== i && d.target.index !== i)
+                .transition()
+                .style("opacity", opacity);
+                };
         };
 
         var getId = (d) => d.source.index + "_" + d.target.index;
@@ -224,11 +221,11 @@ var Displayer = (function() {
             .attr("text-anchor", (d) => d.angle > Math.PI ? "end" : null)
             .attr("transform", (d) =>  {
                 return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-                + "translate(" + (innerRadius + 26) + ")"
-                + (d.angle > Math.PI ? "rotate(180)" : "");
+                    + "translate(" + (innerRadius + 26) + ")"
+                    + (d.angle > Math.PI ? "rotate(180)" : "");
             })
-        .text((d) => chordData.people[d.index]);
-        
+            .text((d) => chordData.people[d.index]);
+
         graph.selectAll("path.chord")
             .data(chord.chords)
             .enter().append("path")
@@ -263,8 +260,8 @@ var Displayer = (function() {
 
             var h = 0.5 * (Math.sin(adj1) - Math.sin(adj2));
             var w = 0.5 * (Math.cos(adj1) - Math.cos(adj2));
-            
-//             var corners = [w<0 ? -w : 0, h<0 ? -h : 0, w<0 ? 0 : w, h<0 ? 0: h];
+
+            //             var corners = [w<0 ? -w : 0, h<0 ? -h : 0, w<0 ? 0 : w, h<0 ? 0: h];
             var corners;
             if (w < 0) {
                 if (h < 0) {
@@ -277,8 +274,8 @@ var Displayer = (function() {
                     corners = [0, 0, w, -h];
                 } else {
                     corners = [0, h, w, 0];
-                }
-                
+            }
+
             }
 
             return corners[type]; 
@@ -343,30 +340,25 @@ var Displayer = (function() {
         };
     };
 
-    self.makePairComparison = function(networks, a, b) {
-        var graphData = extractPairData(networks, a, b);   
+    self.makeComparison = function(networks, list) {
+//        if (list.length <= 1) return; // need at least two
 
-        var maxSentA = _.reduce(graphData.matrix[0], (c, v) => 
-                Math.max(c, v.y), -99);
-        var minSentA = _.reduce(graphData.matrix[0], (c, v) => 
-                Math.min(c, v.y), 99);
-        var maxSentB = _.reduce(graphData.matrix[1], (c, v) => 
-                Math.max(c, v.y), -99);
-        var minSentB = _.reduce(graphData.matrix[1], (c, v) => 
-                Math.min(c, v.y), 99);
-        var minSent = Math.min(minSentA, minSentB);
-        var maxSent = Math.max(maxSentA, maxSentB);
+        var graphData = extractComparisonData(networks, list);   
+
+        makeLineGraph("#sentimentGraph", graphData, "sentimentMatrix",
+                     graphData.minSent, graphData.maxSent);
+        makeLineGraph("#degreesGraph", graphData, "degreesMatrix",
+                     0, graphData.maxDeg);
+    };
+    var makeLineGraph = function(graphSel, graphData, dataKey, min, max) {
         var numScenes = graphData.scenes.length;
-
-        var stack = d3.layout.stack().offset("silhoutte");
-        var layer = stack(graphData.matrix);
 
         var x = d3.scale.linear()
             .domain([0, numScenes - 1])
-            .range([4, w-4]);
+            .range([8, w-8]);
         var y = d3.scale.linear()
-            .domain([minSent, maxSent])
-            .range([h, 36]);
+            .domain([min, max])
+            .range([h - 20, 12 + 12*graphData.list.length]);
 
         var color = d3.scale.category10();
 
@@ -374,10 +366,13 @@ var Displayer = (function() {
             .x((d) => x(d.x))
             .y((d) => y(d.y));
 
-        $("#lineGraph").innerHTML = null; // clear previous graph
-        var graph = d3.select("#lineGraph").append("svg");
+        $(graphSel).innerHTML = null; // clear previous graph
+        var graph = d3.select(graphSel).append("svg");
         graph.attr("width", w);
         graph.attr("height", h);
+
+        var stack = d3.layout.stack().offset("silhoutte");
+        var layer = stack(graphData[dataKey]);
 
         graph.selectAll("path")
             .data(layer)
@@ -395,52 +390,98 @@ var Displayer = (function() {
             .attr("class", "key")
             .attr("x", 8)
             .attr("y", (d, i) => i * 16)
-            .attr("dx", 8)
-            .attr("dy", "0.35em")
+            .attr("dx", 8) .attr("dy", "0.35em")
             .attr("font-size", 12)
             .attr("font-weight", "bold")
             .attr("fill", (d, i) => color(i))
-            .text((d, i) => i ? b : a);
+            .text((d, i) => graphData.list[i]); // if two show both
 
         graph.selectAll("text.axis")
-            .data(layer)
+            .data(graphData.scenes)
             .enter().append("text")
-            .attr
+            .attr("dx", 6)
+            .attr("dy", ".35em")
+            .attr("font-size", 10)
+            .attr("font-weight", "bold")
+            .text((d) => d)
+            .attr("x", (d, i) => x(i) - 14)
+            .attr("y", h - 10);
     };
-    var extractPairData = function(networks, a, b) {
-        var scenes = _.difference(_.keys(networks), ["combined"]); // list of scenes
-        var matrix = [new Array(scenes.length), new Array(scenes.length)];
+    var extractComparisonData = function(networks, list) {
+        var a = list[0];
 
-        for (var s = 0; s < scenes.length; s++) {
+        var scenes = _.difference(_.keys(networks), ["combined"]); // list of scenes
+        // if only two show both
+        var pair = list.length <= 2;
+        var length = pair ? list.length : list.length - 1;
+        list = list.slice(pair ? 0 : 1);
+
+        var sentimentMatrix = new Array(length); 
+        var degreesMatrix = new Array(length); 
+
+        var minSent = Infinity;
+        var maxSent = -Infinity;
+        var maxDeg = -Infinity;
+
+        // fill matrix with empty
+        for (var i = 0; i < length; i++) {
+            sentimentMatrix[i] = new Array(scenes.length);
+            degreesMatrix[i] = new Array(scenes.length);
+        }
+
+        for (var s = 0; s < scenes.length; s++) { // for each scene
             var network = networks[scenes[s]];
 
-            var sentA = 0;
-            var sentB = 0;
+            for (var i = 0; i < length; i++) { // for each person
+                var b = list[i];
 
-            if (network[a]) {
-                if (network[a].edges[b]) {
-                    sentA = network[a].edges[b].sentiment;
-                }
-            }
-            if (network[b]) {
-                if (network[b].edges[a]) {
-                    sentB = network[b].edges[a].sentiment;
-                }
-            }
+                var sent = 0;
+                var deg = 0;
 
-            matrix[0][s] = {
-                x: s,
-                y: sentA
-            };
-            matrix[1][s] = {
-                x: s,
-                y: sentB
-            };
+                if (network[b]) {
+                    if (network[b].edges[a]) {
+                        sent = network[b].edges[a].sentiment;
+                    }
+                    deg = network[b].degrees;
+                }
+                if (pair && i === 0) { // if two show both
+                    var b = list[length - 1]; // other
+                    sent = 0;   
+                    deg = 0;
+
+                    if (network[a]) {
+                        if (network[a].edges[b]) {
+                            sent = network[a].edges[b].sentiment;
+                        }
+                        deg = network[a].degrees;
+                    }
+                }
+
+                // update mins and maxes
+                minSent = Math.min(minSent, sent);
+                maxSent = Math.max(maxSent, sent);
+                maxDeg = Math.max(maxDeg, deg);
+
+                sentimentMatrix[i][s] = {
+                    x: s,
+                    y: sent
+                };
+                degreesMatrix[i][s] = {
+                    x: s,
+                    y: deg
+                };
+            }
         }
 
         return {
-            matrix: matrix,
-            scenes: scenes
+            sentimentMatrix: sentimentMatrix,
+            degreesMatrix: degreesMatrix,
+            scenes: scenes,
+            list: list,
+            minSent: minSent,
+            maxSent: maxSent,
+            maxDeg: maxDeg,
+            pair: pair
         };
     };
 
@@ -448,9 +489,9 @@ var Displayer = (function() {
         var streamData = createStreamMatrix(networks, minLines, minDegrees);
 
         var maxLength = _.reduce(_.omit(networks, "combined"), (c, v) => 
-            Math.max(c, _.reduce(v, (p, n) => Math.max(p, n.degrees), 0)), 0);
+        Math.max(c, _.reduce(v, (p, n) => Math.max(p, n.degrees), 0)), 0);
         var maxLines = _.reduce(networks.combined, (c, v) => 
-            Math.max(c, v.lines), 0);
+        Math.max(c, v.lines), 0);
         var numScenes = streamData.scenes.length;
         var persons = _.keys(streamData.people).length;
 
@@ -500,7 +541,7 @@ var Displayer = (function() {
 
             index[person] = i++; 
         }
-        
+
         var invert = _.invert(index); //rverse lookup
         var l = _.keys(index).length;
         var matrix = new Array(l);
@@ -542,19 +583,19 @@ var Displayer = (function() {
         // clear table
         $("table#stats > thead").innerHTML = null;
         $("table#stats > tbody").innerHTML = null;
-        
+
         displayTable(null);
     };
     var displayTable = function(sortOn) {
         // create the header
         var thead = d3.select("table#stats > thead").selectAll("th") // pick el for header
-            .data(["Character", "Lines", "Interactions"]) // list column titles
-            .enter().append("th").text(_.identity) // fill elements
-            .on("click", displayTable.bind(this)); // event listener for sort
+        .data(["Character", "Lines", "Interactions"]) // list column titles
+        .enter().append("th").text(_.identity) // fill elements
+        .on("click", displayTable.bind(this)); // event listener for sort
 
         // fill the table & create rows
         var tr = d3.select("table#stats > tbody").selectAll("tr")
-            .data(_.keys(stats));
+        .data(_.keys(stats));
         tr.enter().append("tr");
 
         // fill cells
