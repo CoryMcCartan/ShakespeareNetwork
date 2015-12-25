@@ -80,11 +80,7 @@ this.addEventListener("install", function(e) {
 // route requests the right way
 this.addEventListener("fetch", function(e) {
     e.respondWith(
-        fetch(e.request).then(function(response) {
-            console.log("NETWORK:");
-            console.log(response);
-            return response;
-        })
+        fetch(e.request)
         .catch(function(r) {
             return caches.match(e.request);
         })

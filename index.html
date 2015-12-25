@@ -4,6 +4,12 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="encoding" content="utf8">
 
+        <!-- HTTPS REDIRECTION -->
+        <script type="text/javascript">
+            if (location.pathname.indexOf("shakespeare") >= 0 
+                && location.protocol !== "http:") location.protocol = "https:";
+        </script>
+
 		<title>Shakespeare's Linguistic  Networks</title>
 
 		<link rel="icon" href="favicon.png">
