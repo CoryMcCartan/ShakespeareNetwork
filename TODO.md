@@ -1,4 +1,4 @@
-TODOS
+# TODOS
 
 * Service Workers for offline support
 * Switch to Fetch API
