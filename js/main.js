@@ -33,6 +33,6 @@ function loadPlay() {
     return false; // don't reload page
 }
 
-navigator.serviceWorker.register("service-worker.js", {scope: "/"}).then(() => {
+navigator.serviceWorker.register("service-worker.js", {scope: location.pathname}).then(() => {
     console.log("Service Worker registered.");
 }).catch(LOGF);
