@@ -6,7 +6,7 @@
 
         <!-- HTTPS REDIRECTION -->
         <script type="text/javascript">
-            if (location.pathname.indexOf("shakespeare") >= 0 
+            if (location.pathname.match(/shakespeare/i)  
                 && location.protocol !== "https:") location.protocol = "https:";
         </script>
 
@@ -83,10 +83,18 @@
 
                 <div id="vis" class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
                     <div class="mdl-tabs__tab-bar">
-                        <a href="#graph-panel" class="mdl-tabs__tab is-active">Network View</a>
-                        <a href="#chord-panel" class="mdl-tabs__tab">Circle View</a>
-                        <a href="#stream-panel" class="mdl-tabs__tab" style="display: none;">Stream View</a>
-                        <a href="#lineGraph-panel" class="mdl-tabs__tab">Character Comparison</a>
+                        <a href="#graph-panel" class="mdl-tabs__tab is-active">
+                            <i class="material-icons">grain</i>&nbsp;&nbsp;
+                            Network View
+                        </a>
+                        <a href="#chord-panel" class="mdl-tabs__tab">
+                            <i class="material-icons">donut_large</i>&nbsp;&nbsp;
+                            Circle View
+                        </a>
+                        <a href="#lineGraph-panel" class="mdl-tabs__tab">
+                            <i class="material-icons">compare_arrows</i>&nbsp;&nbsp;
+                            Character Comparison
+                        </a>
                     </div>
 
                     <div class="mdl-tabs__panel is-active" id="graph-panel">

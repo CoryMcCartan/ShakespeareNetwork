@@ -1,3 +1,4 @@
+/* GLOBAL */
 body {
     background-color: #fcfcfc;
 }
@@ -5,6 +6,7 @@ html * {
     font-family: "Roboto", "Helvetica", "Arial", sans-serif;
 }
 
+/* FORM CONTROLS */
 div#header-row {
     padding-left: 24px;
 }
@@ -23,6 +25,7 @@ div#controls {
     margin: 1em;
 }
 
+/* VISUALIZTION */
 div#data {
     display: flex;
     flex-wrap: wrap-reverse;
@@ -44,6 +47,7 @@ svg {
     margin-top: 1em;
 }
 
+/* STATS TABLE */
 table#stats {
     flex-grow: 1;
     flex-basis: 300px;
@@ -63,6 +67,7 @@ span.spacer {
     width: 1em;
 }
 
+/* CHARACTER CHIPS */
 div.character:first-child {
     background-color: #aae;
 }
@@ -89,6 +94,7 @@ button.delete:hover {
     color: #222;
 }
 
+/* INPUT ELEMENTS */
 #progress {
     display: none;
 }
@@ -110,6 +116,11 @@ input:-webkit-autofill {
     -webkit-box-shadow: -1px -1px 1px 1000px #fcfcfc inset;
 }
 
+/* TABS */
 .mdl-tabs, .mdl-tabs__panel, .mdl-tabs__tab-bar {
     overflow: visible;
 }
+.mdl-tabs__tab-bar i.material-icons {
+    position: relative;
+    top: 6px;
+} 

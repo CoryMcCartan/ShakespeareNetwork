@@ -1,3 +1,9 @@
+/*
+ * Main file.  App entry point.
+ */
+
+"use strict";
+
 var DEFAULT_PLAY = "Hamlet";
 var DEFAULT_LOCATION = "Combined";
 
