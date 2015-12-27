@@ -3,7 +3,7 @@
  */
 var CACHE_VERSION = "v2";
 var CACHED_OBJECTS = [
-    "/",
+    "",
     "index.html",
     "css/main.css",
     "bower_components/d3/d3.min.js",
