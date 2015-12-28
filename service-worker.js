@@ -1,7 +1,7 @@
 /* 
  * Service Worker for offline use.
  */
-var CACHE_VERSION = "v2";
+var CACHE_VERSION = "v1";
 var IMMEDIATE_DATA = [
     "bower_components/d3/d3.min.js",
     "bower_components/underscore/underscore-min.js",
